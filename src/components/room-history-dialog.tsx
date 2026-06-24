@@ -101,7 +101,7 @@ export function RoomHistoryDialog({
           <form action={handleAdd} className="space-y-3 border-t pt-4">
             <div className="space-y-1.5">
               <Label>Kamar</Label>
-              <Select value={selectedBuilding} onValueChange={setSelectedBuilding}>
+              <Select value={selectedBuilding} onValueChange={(val) => val && setSelectedBuilding(val)}>
                 <SelectTrigger>
                   <span data-slot="select-value" className="flex flex-1 text-left">
                     {selectedBuilding

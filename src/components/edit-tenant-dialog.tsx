@@ -113,7 +113,7 @@ export function EditTenantDialog({
             <div className="space-y-2">
               <Label htmlFor="building_id">Pilih Kamar</Label>
               <input type="hidden" name="building_id" value={selectedBuildingId || ""} />
-              <Select value={selectedBuildingId} onValueChange={setSelectedBuildingId}>
+              <Select value={selectedBuildingId} onValueChange={(val) => val && setSelectedBuildingId(val)}>
                 <SelectTrigger>
                   <span data-slot="select-value" className="flex flex-1 text-left line-clamp-1">
                     {selectedBuildingId

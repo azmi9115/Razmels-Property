@@ -106,7 +106,7 @@ export function EditUserDialog({
           </div>
           <div className="space-y-2">
             <Label>Role / Jabatan</Label>
-            <Select value={selectedRole} onValueChange={setSelectedRole} disabled={user.role === "OWNER"}>
+            <Select value={selectedRole} onValueChange={(val) => val && setSelectedRole(val)} disabled={user.role === "OWNER"}>
               <SelectTrigger>
                 <span data-slot="select-value" className="flex flex-1 text-left">
                   {selectedRole === "OWNER" ? "Owner (Pemilik)" : "Admin (Staf)"}

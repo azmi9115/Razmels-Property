@@ -58,7 +58,7 @@ export function AddUserDialog() {
           </div>
           <div className="space-y-2">
             <Label>Role / Jabatan</Label>
-            <Select value={selectedRole} onValueChange={setSelectedRole}>
+            <Select value={selectedRole} onValueChange={(val) => val && setSelectedRole(val)}>
               <SelectTrigger>
                 <span data-slot="select-value" className="flex flex-1 text-left">
                   {selectedRole === "OWNER" ? "Owner (Pemilik)" : "Admin (Staf)"}
