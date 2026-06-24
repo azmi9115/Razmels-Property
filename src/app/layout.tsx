@@ -32,7 +32,7 @@ export default function RootLayout({
     >
       <body className="min-h-full flex flex-col">
         <AuthProvider>
-          <TooltipProvider delayDuration={0}>
+          <TooltipProvider>
             {children}
           </TooltipProvider>
         </AuthProvider>
