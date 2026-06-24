@@ -8,11 +8,11 @@ git pull origin main
 
 # 2. Membangun ulang (rebuild) image Docker
 echo "📦 Membangun ulang kontainer Docker..."
-docker-compose build
+docker compose build
 
 # 3. Menyalakan ulang container di background
 echo "🔄 Menyalakan ulang aplikasi dengan versi terbaru..."
-docker-compose up -d
+docker compose up -d
 
 # 4. Membersihkan image lama yang sudah tidak terpakai agar SSD VPS tidak penuh
 echo "🧹 Membersihkan sisa-sisa file lama..."
