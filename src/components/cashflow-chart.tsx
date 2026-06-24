@@ -26,7 +26,7 @@ export function CashflowChart({ data }: { data: ChartData[] }) {
         <Tooltip 
           cursor={{fill: '#f1f5f9'}}
           contentStyle={{borderRadius: '8px', border: 'none', boxShadow: '0 4px 6px -1px rgb(0 0 0 / 0.1)'}}
-          formatter={(value: number) => [`Rp ${value.toLocaleString('id-ID')}`, undefined]}
+          formatter={(value: any) => [`Rp ${Number(value).toLocaleString('id-ID')}`, undefined]}
         />
         <Legend wrapperStyle={{paddingTop: '20px'}} />
         <Bar dataKey="Pemasukan" fill="#10b981" radius={[4, 4, 0, 0]} maxBarSize={50} />
