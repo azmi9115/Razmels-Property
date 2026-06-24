@@ -20,7 +20,8 @@ export function AddPaymentDialog({ activeTenants }: { activeTenants: any[] }) {
   const [isOverride, setIsOverride] = useState<boolean>(false)
 
   // Auto-calculate amount based on tenant's building rent_price and duration
-  const handleTenantChange = (tenantId: string) => {
+  const handleTenantChange = (tenantId: string | null) => {
+    if (!tenantId) return;
     setSelectedTenantId(tenantId)
     const tenant = activeTenants.find(t => t.id === tenantId)
     if (tenant?.building) {
