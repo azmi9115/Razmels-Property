@@ -1,5 +1,7 @@
 # 1. Base Image
-FROM node:20-alpine AS base
+FROM node:20-slim AS base
+# Ensure openssl is installed just in case Prisma needs it on slim
+RUN apt-get update && apt-get install -y openssl && rm -rf /var/lib/apt/lists/*
 
 # 2. Builder Stage
 FROM base AS builder
@@ -17,8 +19,8 @@ RUN npm run build
 FROM base AS runner
 WORKDIR /app
 
-ENV NODE_ENV production
-ENV PORT 3000
+ENV NODE_ENV=production
+ENV PORT=3000
 
 # Copy necessary files from builder
 COPY --from=builder /app/public ./public
