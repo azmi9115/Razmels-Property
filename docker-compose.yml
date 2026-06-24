@@ -1,0 +1,17 @@
+version: '3.8'
+services:
+  razmels-web:
+    build: .
+    container_name: razmels-web
+    restart: unless-stopped
+    ports:
+      - "3000:3000"
+    volumes:
+      - razmels-data:/app/prisma
+    environment:
+      - DATABASE_URL=file:/app/prisma/dev.db
+      - NEXTAUTH_URL=https://yourdomain.com
+      - NEXTAUTH_SECRET=your_super_secret_production_key_here
+
+volumes:
+  razmels-data:

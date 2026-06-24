@@ -1,0 +1,93 @@
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "sqlite"
+  url      = env("DATABASE_URL")
+}
+
+model Building {
+  id          String    @id @default(uuid())
+  code        String    @unique
+  type        String    // "Kontrakan" | "Kosan"
+  rent_price  Float
+  rent_period String    // "Bulanan" | "Tahunan"
+  createdAt   DateTime  @default(now())
+  
+  tenants       Tenant[]
+  roomHistories RoomHistory[]
+}
+
+model Tenant {
+  id                String    @id @default(uuid())
+  name              String
+  nik               String
+  phone_1           String
+  phone_2           String?
+  emergency_contact String?
+  id_card_url       String?
+  entry_date        DateTime
+  exit_date         DateTime?
+  status            String    @default("Active") // "Active" | "Deactive"
+  createdAt         DateTime  @default(now())
+
+  building_id       String?
+  building          Building? @relation(fields: [building_id], references: [id], onDelete: SetNull)
+
+  payments          Payment[]
+  roomHistories     RoomHistory[]
+}
+
+model RoomHistory {
+  id          String    @id @default(uuid())
+  moved_in    DateTime
+  moved_out   DateTime?
+  notes       String?
+  createdAt   DateTime  @default(now())
+
+  tenant_id   String
+  tenant      Tenant    @relation(fields: [tenant_id], references: [id], onDelete: Cascade)
+
+  building_id String?
+  building    Building? @relation(fields: [building_id], references: [id], onDelete: SetNull)
+}
+
+model Payment {
+  id                   String   @id @default(uuid())
+  amount               Float
+  transfer_date        DateTime
+  rent_duration_months Float
+  rent_end_date        DateTime
+  createdAt            DateTime @default(now())
+
+  tenant_id            String
+  tenant               Tenant   @relation(fields: [tenant_id], references: [id], onDelete: Cascade)
+}
+
+model Cashflow {
+  id               String   @id @default(uuid())
+  type             String   // "Pemasukan" | "Pengeluaran"
+  category         String
+  transaction_date DateTime
+  description      String
+  amount           Float
+  createdAt        DateTime @default(now())
+}
+
+model User {
+  id        String   @id @default(uuid())
+  email     String   @unique
+  password  String
+  name      String
+  role      String   @default("ADMIN")
+  createdAt DateTime @default(now())
+}
+
+model FinancialSnapshot {
+  id                String   @id @default(uuid())
+  total_tabungan    Float    @default(0)
+  total_investasi   Float    @default(0)
+  total_rekening    Float    @default(0)
+  updated_at        DateTime @default(now())
+}
