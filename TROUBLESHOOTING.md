@@ -72,3 +72,11 @@ Setelah memindahkan port atau mendeploy ulang aplikasi baru, browser masih menam
 Framework seperti Next.js dan React sangat mengandalkan *Client-Side Caching*. Browser secara agresif menahan *bundle JS* lama, sehingga mencoba menembak endpoint API yang sudah usang dan berujung pada aplikasi yang "bengong".
 **Solusi:**
 - Selalu minta pengguna untuk melakukan *Hard Refresh* (Ctrl+F5) atau mencoba akses via *Private Window/Incognito* jika tampilan web terasa aneh atau bukan versi terbaru pasca deployment.
+
+## 9. Error Docker Compose V1 vs V2 (ContainerConfig KeyError)
+**Kendala:**
+Saat menjalankan script `update.sh` di VPS, muncul error: `KeyError: 'ContainerConfig'` dan container gagal dibuat ulang (sehingga memicu nama container konflik aneh seperti `b8bf2de208c4_razmels-web`).
+**Penyebab:**
+Script deployment menggunakan perintah versi lama `docker-compose` (dengan tanda hubung/strip) yang berbasis Python. Saat image dibangun menggunakan fitur modern BuildKit, metadata image tersebut tidak memiliki atribut lama `ContainerConfig`. Saat `docker-compose` versi 1 membaca image baru ini, ia *crash* karena tidak menemukan atribut tersebut.
+**Solusi:**
+- Hentikan pemakaian `docker-compose` (versi 1 jadul). Gunakan sintaks modern **`docker compose`** (tanpa spasi) di seluruh script deployment (`update.sh` dsb) karena ini adalah plugin standar yang terintegrasi dengan versi Docker engine modern.

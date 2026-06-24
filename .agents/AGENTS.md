@@ -6,6 +6,7 @@ Dokumen ini adalah aturan otomatis yang akan dimuat oleh AI Asisten di setiap se
 - **BASE IMAGE**: Wajib menggunakan `node:20-slim` atau versi berbasis Debian lainnya. JANGAN gunakan `alpine` karena akan menyebabkan *Prisma OpenSSL musl Error*.
 - **NPM INSTALL**: Gunakan `npm install` bukan `npm ci` di Dockerfile untuk menghindari masalah integritas *package-lock.json* antara Windows (local) dan Linux (container).
 - **STATIC GENERATION ENV**: Pastikan ada `ENV DATABASE_URL="file:./dev.db"` (dummy variable) pada *stage builder* Dockerfile. Jika tidak ada, Next.js *Static Page Generation* (`npm run build`) akan gagal dan crash karena Prisma tidak menemukan URL database di tahap kompilasi.
+- **DOCKER COMPOSE SYNTAX**: **SELALU** gunakan sintaks V2 modern `docker compose` (tanpa tanda strip/spasi). JANGAN pernah menggunakan `docker-compose` v1 (dengan strip) di script apapun (`update.sh`, dsb). Versi 1 tidak mengenali BuildKit secara default dan akan menyebabkan *error* mematikan `KeyError: 'ContainerConfig'` saat melakukan *up*.
 
 ## 2. Aturan TypeScript & UI Components
 - Proyek ini menggunakan komponen UI dari shadcn/ui dan Recharts.
