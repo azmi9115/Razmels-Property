@@ -10,8 +10,8 @@ services:
       - razmels-data:/app/prisma
     environment:
       - DATABASE_URL=file:/app/prisma/dev.db
-      - NEXTAUTH_URL=https://yourdomain.com
-      - NEXTAUTH_SECRET=your_super_secret_production_key_here
+      - NEXTAUTH_URL=http://100.68.41.84:3001
+      - NEXTAUTH_SECRET=ba0437937f1824a7900479414cc402dd41f1351142cb262a3b8963eea7022200
 
 volumes:
   razmels-data:
