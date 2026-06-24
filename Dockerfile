@@ -12,6 +12,10 @@ RUN npm install
 COPY . .
 # Generate Prisma Client
 RUN npx prisma generate
+
+# Dummy DB URL to satisfy Prisma during Next.js static generation
+ENV DATABASE_URL="file:./dev.db"
+
 # Build Next.js App
 RUN npm run build
 
