@@ -5,12 +5,12 @@ services:
     container_name: razmels-web
     restart: unless-stopped
     ports:
-      - "3001:3000"
+      - "3000:3000"
     volumes:
       - razmels-data:/app/prisma
     environment:
       - DATABASE_URL=file:/app/prisma/dev.db
-      - NEXTAUTH_URL=http://100.68.41.84:3001
+      - NEXTAUTH_URL=http://100.68.41.84:3000
       - NEXTAUTH_SECRET=ba0437937f1824a7900479414cc402dd41f1351142cb262a3b8963eea7022200
 
 volumes:
