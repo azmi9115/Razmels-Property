@@ -15,8 +15,16 @@ Dokumen ini adalah aturan otomatis yang akan dimuat oleh AI Asisten di setiap se
 
 ## 3. Aturan Konfigurasi Port
 - Port `3000` di VPS secara historis mungkin disandera oleh proses *node root*.
-- Pemetaan port Docker container saat ini adalah `3001:3000`. Jika menambah servis baru, hindari memetakan port host ke port 3000 secara eksplisit jika belum dipastikan kosong.
+- Selalu pastikan Anda tahu port host apa yang dipakai. Jika menggunakan port `3000`, pastikan proses lama benar-benar dimatikan.
 
-## 4. Aturan Prisma
+## 4. Aturan NextAuth & Security
+- **NEXTAUTH_URL**: Wajib sama persis dengan URL yang diakses oleh pengguna (termasuk skema http/https dan portnya). Jika tidak cocok, NextAuth akan mendeteksi sebagai serangan CSRF dan form login tidak akan merespon apa-apa secara diam-diam.
+- Contoh: Jika VPS IP adalah `100.68.41.84` dan berjalan di port `3000`, maka `NEXTAUTH_URL=http://100.68.41.84:3000`.
+
+## 5. Aturan Browser Caching & UI 
+- Jika UI yang ditampilkan setelah deployment terlihat salah, aneh, atau seperti versi aplikasi sebelumnya (padahal server dipastikan sudah menjalankan versi terbaru), **Minta User untuk Hard Refresh (Ctrl+F5)** atau mencoba via Private Window/Incognito.
+- Hal ini karena Next.js dan React sangat agresif menahan *Client-Side Caching* pada browser.
+
+## 6. Aturan Prisma
 - Pada fase development, jika merubah struktur database SQLite dan ada *warning* kemungkinan data terhapus, gunakan `npx prisma db push --accept-data-loss`.
 - Selalu ingat untuk memanggil `npx prisma generate` jika ada perubahan pada `schema.prisma`.

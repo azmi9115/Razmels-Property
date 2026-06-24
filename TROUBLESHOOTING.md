@@ -56,3 +56,19 @@ Port 3000 di VPS sedang disandera oleh proses Node.js lain (atau aplikasi versi 
 - Cari proses yang menyandera port: `netstat -tulnp | grep 3000` atau `ps aux | grep node`.
 - Matikan paksa jika perlu (contoh: `sudo killall node`).
 - Alternatif (jika tak ingin membunuh proses lama): Ubah pemetaan port di `docker-compose.yml` menjadi port yang bebas, contohnya `3001:3000`.
+
+## 7. Login Gagal Diam-diam (NextAuth CSRF Mismatch)
+**Kendala:**
+User mencoba login, namun tombol "Sign In" tidak merespon apa-apa dan URL hanya *redirect* atau tertahan di halaman login tanpa ada pesan error.
+**Penyebab:**
+Nilai `NEXTAUTH_URL` di `docker-compose.yml` tidak sesuai dengan alamat asli yang sedang diketik oleh pengguna di browser. Jika `NEXTAUTH_URL` diisi `https://razmels.com` tetapi pengguna mengakses dari `http://100.68.41.84:3001`, NextAuth akan menganggap ini sebagai serangan CSRF dan menolak interaksi secara sepihak.
+**Solusi:**
+- Pastikan variabel `NEXTAUTH_URL` sama persis dengan IP dan Port (atau domain) yang dipakai saat mengakses web (contoh: `http://100.68.41.84:3000`).
+
+## 8. Halaman Tersangkut di Tampilan Aplikasi Lama (Aggressive Browser Caching)
+**Kendala:**
+Setelah memindahkan port atau mendeploy ulang aplikasi baru, browser masih menampilkan antarmuka aplikasi versi lama (contoh: Kost-App) padahal server sudah dipastikan menyajikan file yang baru.
+**Penyebab:**
+Framework seperti Next.js dan React sangat mengandalkan *Client-Side Caching*. Browser secara agresif menahan *bundle JS* lama, sehingga mencoba menembak endpoint API yang sudah usang dan berujung pada aplikasi yang "bengong".
+**Solusi:**
+- Selalu minta pengguna untuk melakukan *Hard Refresh* (Ctrl+F5) atau mencoba akses via *Private Window/Incognito* jika tampilan web terasa aneh atau bukan versi terbaru pasca deployment.
