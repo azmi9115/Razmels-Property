@@ -29,7 +29,10 @@ export default async function TenantsPage(props: { searchParams?: Promise<{ quer
         { building: { code: { contains: query } } }
       ]
     } : {},
-    orderBy: { entry_date: "desc" }
+    orderBy: [
+      { status: "asc" },
+      { entry_date: "desc" }
+    ]
   });
 
   const availableBuildings = await prisma.building.findMany({
