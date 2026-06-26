@@ -5,7 +5,7 @@ services:
     container_name: razmels-web
     restart: unless-stopped
     ports:
-      - "3000:3000"
+      - "3001:3000"
     volumes:
       - razmels-data:/app/prisma
     environment:
