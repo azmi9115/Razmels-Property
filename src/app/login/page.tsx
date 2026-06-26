@@ -78,11 +78,11 @@ export default function LoginPage() {
                 </div>
               )}
               <div className="space-y-2">
-                <Label htmlFor="email">Email</Label>
+                <Label htmlFor="username">Username</Label>
                 <Input 
-                  id="email" 
-                  type="email" 
-                  placeholder="nama@email.com" 
+                  id="username" 
+                  type="text" 
+                  placeholder="Enter your username" 
                   required 
                   value={email}
                   onChange={(e) => setEmail(e.target.value)}
