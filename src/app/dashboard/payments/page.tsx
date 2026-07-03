@@ -4,6 +4,7 @@ import { Badge } from "@/components/ui/badge"
 import { CreditCard, CalendarClock, Printer } from "lucide-react"
 import prisma from "@/lib/prisma"
 import { AddPaymentDialog } from "@/components/add-payment-dialog"
+import { MutationUploadDialog } from "@/components/mutation-upload-dialog"
 import { PaymentActions } from "@/components/payment-actions"
 import { SearchBar } from "@/components/search-bar"
 import { PaginationControls } from "@/components/pagination-controls"
@@ -67,6 +68,7 @@ export default async function PaymentsPage(props: { searchParams?: Promise<{ que
         </div>
         <div className="flex items-center gap-3 w-full sm:w-auto">
           <SearchBar placeholder="Cari ID, Tanggal, Penghuni..." />
+          <MutationUploadDialog activeTenants={activeTenants} />
           <AddPaymentDialog activeTenants={activeTenants} />
         </div>
       </div>
