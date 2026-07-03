@@ -7,7 +7,7 @@ RUN apt-get update && apt-get install -y openssl && rm -rf /var/lib/apt/lists/*
 FROM base AS builder
 WORKDIR /app
 COPY package.json package-lock.json ./
-RUN npm install
+RUN npm config set fetch-retry-maxtimeout 120000 && npm config set fetch-retry-mintimeout 20000 && npm install --network-timeout=1000000 || npm install || npm install
 
 COPY . .
 # Generate Prisma Client
