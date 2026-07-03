@@ -197,11 +197,9 @@ export function MutationUploadDialog({ activeTenants }: { activeTenants: Tenant[
 
   return (
     <Dialog open={open} onOpenChange={setOpen}>
-      <DialogTrigger asChild>
-        <Button variant="outline" className="gap-2 bg-slate-50 hover:bg-slate-100 border-slate-200">
-          <FileSpreadsheet className="h-4 w-4 text-emerald-600" />
-          Verifikasi Mutasi CSV (Beta)
-        </Button>
+      <DialogTrigger render={<Button variant="outline" className="gap-2 bg-slate-50 hover:bg-slate-100 border-slate-200" />}>
+        <FileSpreadsheet className="h-4 w-4 text-emerald-600" />
+        Verifikasi Mutasi CSV (Beta)
       </DialogTrigger>
       <DialogContent className="sm:max-w-[700px] max-h-[85vh] flex flex-col">
         <DialogHeader>
