@@ -88,7 +88,7 @@ export function MutationUploadDialog({ activeTenants }: { activeTenants: Tenant[
           const matched: MatchedMutation[] = mutations.map((m, index) => {
             // Find exactly one tenant whose rent_price matches the amount
             let possibleTenant = null;
-            const tenantsWithMatchingPrice = tenants.filter(t => t.building?.rent_price === m.amount);
+            const tenantsWithMatchingPrice = activeTenants.filter(t => t.building?.rent_price === m.amount);
             
             if (tenantsWithMatchingPrice.length === 1) {
               possibleTenant = tenantsWithMatchingPrice[0];
