@@ -28,11 +28,40 @@ export default async function TenantsPage(props: { searchParams?: Promise<{ quer
         { nik: { contains: query } },
         { building: { code: { contains: query } } }
       ]
-    } : {},
-    orderBy: [
-      { status: "asc" },
-      { entry_date: "desc" }
-    ]
+    } : {}
+  });
+
+  const now = new Date();
+  now.setHours(0, 0, 0, 0);
+
+  tenants.sort((a, b) => {
+    // 1. Status Aktif di atas
+    if (a.status !== b.status) {
+      return a.status === "Active" ? -1 : 1;
+    }
+
+    // 2. Jika sama-sama Aktif, yang masa sewanya masih ada di atas yang sudah habis/telat
+    if (a.status === "Active") {
+      const aDue = a.payments.length > 0 ? new Date(a.payments[0].rent_end_date) : new Date(a.entry_date);
+      const bDue = b.payments.length > 0 ? new Date(b.payments[0].rent_end_date) : new Date(b.entry_date);
+      aDue.setHours(0, 0, 0, 0);
+      bDue.setHours(0, 0, 0, 0);
+      
+      const aDiff = Math.ceil((aDue.getTime() - now.getTime()) / (1000 * 60 * 60 * 24));
+      const bDiff = Math.ceil((bDue.getTime() - now.getTime()) / (1000 * 60 * 60 * 24));
+      
+      const aActiveRent = aDiff >= 0;
+      const bActiveRent = bDiff >= 0;
+
+      if (aActiveRent && !bActiveRent) return -1;
+      if (!aActiveRent && bActiveRent) return 1;
+
+      // Jika status masa sewa sama (sama-sama aktif atau sama-sama telat), urutkan berdasarkan yang paling mendesak
+      return aDiff - bDiff; 
+    }
+
+    // 3. Jika sama-sama Non Aktif, urutkan berdasarkan yang terbaru masuk
+    return new Date(b.entry_date).getTime() - new Date(a.entry_date).getTime();
   });
 
   const availableBuildings = await prisma.building.findMany({
