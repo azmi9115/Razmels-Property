@@ -23,6 +23,8 @@ RUN npm run build
 FROM base AS runner
 WORKDIR /app
 
+RUN apt-get update && apt-get install -y sqlite3 && rm -rf /var/lib/apt/lists/*
+
 ENV NODE_ENV=production
 ENV PORT=3000
 
@@ -35,6 +37,7 @@ COPY --from=builder /app/prisma ./prisma
 
 # Setup entrypoint script
 RUN echo -e '#!/bin/sh\n\
+sqlite3 prisma/dev.db "PRAGMA journal_mode=WAL;"\n\
 # Pastikan database sinkron saat container nyala\n\
 npx prisma db push --accept-data-loss\n\
 npm start\n\
