@@ -25,9 +25,9 @@ export default async function MonitoringPage() {
     ]
   })
 
-  // Generate last 12 months (Newest to Oldest)
+  // Generate last 11 months (Newest to Oldest) excluding current month
   const months: { label: string; year: number; month: number }[] = []
-  for (let i = 0; i <= 11; i++) {
+  for (let i = 1; i <= 11; i++) {
     const d = new Date()
     d.setDate(1)
     d.setMonth(d.getMonth() - i)
