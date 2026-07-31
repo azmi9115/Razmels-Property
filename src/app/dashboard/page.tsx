@@ -1,5 +1,5 @@
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card"
-import { Building2, Users, Wallet, TrendingUp, TrendingDown, ArrowRight, AlertCircle, ArrowUpRight, ArrowDownRight, Building, FileSpreadsheet } from "lucide-react"
+import { Building2, Users, Wallet, TrendingUp, TrendingDown, ArrowRight, AlertCircle, ArrowUpRight, ArrowDownRight, Building, FileSpreadsheet, Landmark, PieChart, CalendarOff } from "lucide-react"
 import prisma from "@/lib/prisma"
 import { CashflowChart } from "@/components/cashflow-chart"
 import { CategoryPieChart } from "@/components/category-pie-chart"
@@ -18,6 +18,24 @@ export default async function DashboardPage() {
   
   const income = cashflows.filter(c => c.type === "Pemasukan").reduce((acc, curr) => acc + curr.amount, 0)
   const expense = cashflows.filter(c => c.type === "Pengeluaran").reduce((acc, curr) => acc + curr.amount, 0)
+  const saldoAkhir = income - expense;
+  const profitMargin = income > 0 ? (saldoAkhir / income) * 100 : 0;
+
+  const currentMonth = new Date().getMonth();
+  const currentYear = new Date().getFullYear();
+  const lastMonth = currentMonth === 0 ? 11 : currentMonth - 1;
+  const lastMonthYear = currentMonth === 0 ? currentYear - 1 : currentYear;
+
+  const incomeThisMonth = cashflows
+    .filter(c => c.type === "Pemasukan" && new Date(c.transaction_date).getMonth() === currentMonth && new Date(c.transaction_date).getFullYear() === currentYear)
+    .reduce((acc, curr) => acc + curr.amount, 0);
+
+  const incomeLastMonth = cashflows
+    .filter(c => c.type === "Pemasukan" && new Date(c.transaction_date).getMonth() === lastMonth && new Date(c.transaction_date).getFullYear() === lastMonthYear)
+    .reduce((acc, curr) => acc + curr.amount, 0);
+
+  const incomeDiff = incomeThisMonth - incomeLastMonth;
+
 
   // Hitung data untuk grafik (6 bulan terakhir)
   const sixMonthsAgo = new Date()
@@ -37,15 +55,22 @@ export default async function DashboardPage() {
   for (let i = 5; i >= 0; i--) {
     const d = new Date()
     d.setMonth(d.getMonth() - i)
-    const monthStr = d.toLocaleDateString("id-ID", { month: "short", year: "2-digit" })
-    monthlyDataMap.set(monthStr, { month: monthStr, Pemasukan: 0, Pengeluaran: 0 })
+    const m = d.getMonth()
+    const y = d.getFullYear()
+    const monthNames = ["Jan", "Feb", "Mar", "Apr", "Mei", "Jun", "Jul", "Ags", "Sep", "Okt", "Nov", "Des"];
+    const monthStr = `${monthNames[m]} ${y.toString().slice(-2)}`;
+    monthlyDataMap.set(`${y}-${m}`, { month: monthStr, Pemasukan: 0, Pengeluaran: 0 })
   }
 
   allCashflows.forEach(cf => {
     // Line chart data
-    const monthStr = new Date(cf.transaction_date).toLocaleDateString("id-ID", { month: "short", year: "2-digit" })
-    if (monthlyDataMap.has(monthStr)) {
-      const data = monthlyDataMap.get(monthStr)!
+    const d = new Date(cf.transaction_date);
+    const m = d.getMonth();
+    const y = d.getFullYear();
+    const key = `${y}-${m}`;
+    
+    if (monthlyDataMap.has(key)) {
+      const data = monthlyDataMap.get(key)!
       if (cf.type === "Pemasukan") data.Pemasukan += cf.amount
       else data.Pengeluaran += cf.amount
     }
@@ -118,7 +143,12 @@ export default async function DashboardPage() {
   const today = new Date();
   today.setHours(0, 0, 0, 0);
 
+  let potensiPendapatan = 0;
+  let tenantMenunggak = 0;
+
   const upcomingDueDates = tenantsWithPayments.map(tenant => {
+    potensiPendapatan += tenant.building?.rent_price || 0;
+
     const dueDate = tenant.payments && tenant.payments.length > 0 
       ? new Date(tenant.payments[0].rent_end_date)
       : new Date(tenant.entry_date);
@@ -127,6 +157,8 @@ export default async function DashboardPage() {
     const diffTime = dueDate.getTime() - today.getTime();
     const diffDays = Math.ceil(diffTime / (1000 * 60 * 60 * 24));
     
+    if (diffDays < 0) tenantMenunggak++;
+
     return {
       name: tenant.name,
       room: tenant.building?.code || "N/A",
@@ -162,21 +194,40 @@ export default async function DashboardPage() {
         </a>
       </div>
 
-      <div className="grid gap-6 md:grid-cols-2 lg:grid-cols-4">
-        {/* Pemasukan Card */}
+      <div className="grid gap-6 md:grid-cols-2 lg:grid-cols-5">
+        {/* Total Pendapatan Card */}
         <Card className="border-slate-200/60 shadow-sm bg-white/70 backdrop-blur-xl transition-all hover:shadow-md hover:-translate-y-1">
           <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
             <CardTitle className="text-sm font-semibold text-slate-500 uppercase tracking-wider">Total Pendapatan</CardTitle>
-            <div className="h-10 w-10 bg-green-100 rounded-xl flex items-center justify-center text-green-600 shadow-inner">
-              <Wallet className="h-5 w-5" />
+            <div className="h-10 w-10 bg-emerald-100 rounded-xl flex items-center justify-center text-emerald-600 shadow-inner">
+              <Landmark className="h-5 w-5" />
             </div>
           </CardHeader>
           <CardContent>
             <div className="text-2xl font-bold text-slate-800">
               Rp {income.toLocaleString("id-ID")}
             </div>
-            <p className="text-xs font-medium text-green-600 mt-2 flex items-center gap-1 bg-green-50 w-max px-2 py-1 rounded-md">
-              <ArrowUpRight className="h-3 w-3" /> +20.1% dari bulan lalu
+            <p className="text-xs font-medium text-slate-500 mt-2">
+              Sejak awal sistem digunakan
+            </p>
+          </CardContent>
+        </Card>
+
+        {/* Pendapatan Bulan Ini Card */}
+        <Card className="border-slate-200/60 shadow-sm bg-white/70 backdrop-blur-xl transition-all hover:shadow-md hover:-translate-y-1">
+          <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
+            <CardTitle className="text-sm font-semibold text-slate-500 uppercase tracking-wider">Pendapatan Bulan Ini</CardTitle>
+            <div className="h-10 w-10 bg-green-100 rounded-xl flex items-center justify-center text-green-600 shadow-inner">
+              <Wallet className="h-5 w-5" />
+            </div>
+          </CardHeader>
+          <CardContent>
+            <div className="text-2xl font-bold text-slate-800">
+              Rp {incomeThisMonth.toLocaleString("id-ID")}
+            </div>
+            <p className={`text-xs font-medium mt-2 flex items-center gap-1 w-max px-2 py-1 rounded-md ${incomeDiff >= 0 ? 'text-green-600 bg-green-50' : 'text-red-600 bg-red-50'}`}>
+              {incomeDiff >= 0 ? <ArrowUpRight className="h-3 w-3" /> : <ArrowDownRight className="h-3 w-3" />} 
+              {incomeDiff >= 0 ? '+' : '-'} Rp {Math.abs(incomeDiff).toLocaleString("id-ID")} vs bln lalu
             </p>
           </CardContent>
         </Card>
@@ -234,6 +285,81 @@ export default async function DashboardPage() {
             </div>
             <p className="text-xs text-muted-foreground mt-2 font-medium">
               Siap untuk disewakan
+            </p>
+          </CardContent>
+        </Card>
+      </div>
+
+      {/* Baris Kedua: Parameter Bisnis (New) */}
+      <div className="grid gap-6 md:grid-cols-2 lg:grid-cols-4">
+        {/* Saldo Akhir Card */}
+        <Card className="border-slate-200/60 shadow-sm bg-white/70 backdrop-blur-xl transition-all hover:shadow-md hover:-translate-y-1">
+          <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
+            <CardTitle className="text-sm font-semibold text-slate-500 uppercase tracking-wider">Saldo Akhir</CardTitle>
+            <div className="h-10 w-10 bg-emerald-100 rounded-xl flex items-center justify-center text-emerald-600 shadow-inner">
+              <Landmark className="h-5 w-5" />
+            </div>
+          </CardHeader>
+          <CardContent>
+            <div className="text-2xl font-bold text-slate-800">
+              Rp {saldoAkhir.toLocaleString("id-ID")}
+            </div>
+            <p className="text-xs font-medium text-slate-500 mt-2">
+              Sisa Kas Bersih
+            </p>
+          </CardContent>
+        </Card>
+
+        {/* Profit Margin Card */}
+        <Card className="border-slate-200/60 shadow-sm bg-white/70 backdrop-blur-xl transition-all hover:shadow-md hover:-translate-y-1">
+          <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
+            <CardTitle className="text-sm font-semibold text-slate-500 uppercase tracking-wider">Margin Laba</CardTitle>
+            <div className="h-10 w-10 bg-indigo-100 rounded-xl flex items-center justify-center text-indigo-600 shadow-inner">
+              <PieChart className="h-5 w-5" />
+            </div>
+          </CardHeader>
+          <CardContent>
+            <div className="text-2xl font-bold text-slate-800">
+              {profitMargin.toFixed(1)}%
+            </div>
+            <p className="text-xs font-medium text-slate-500 mt-2">
+              Persentase Keuntungan
+            </p>
+          </CardContent>
+        </Card>
+
+        {/* Potensi Pendapatan Card */}
+        <Card className="border-slate-200/60 shadow-sm bg-white/70 backdrop-blur-xl transition-all hover:shadow-md hover:-translate-y-1">
+          <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
+            <CardTitle className="text-sm font-semibold text-slate-500 uppercase tracking-wider">Potensi Bulanan</CardTitle>
+            <div className="h-10 w-10 bg-blue-100 rounded-xl flex items-center justify-center text-blue-600 shadow-inner">
+              <TrendingUp className="h-5 w-5" />
+            </div>
+          </CardHeader>
+          <CardContent>
+            <div className="text-2xl font-bold text-slate-800">
+              Rp {potensiPendapatan.toLocaleString("id-ID")}
+            </div>
+            <p className="text-xs font-medium text-slate-500 mt-2">
+              Dari {activeTenants} kamar yang aktif
+            </p>
+          </CardContent>
+        </Card>
+
+        {/* Tunggakan Card */}
+        <Card className={`border-slate-200/60 shadow-sm bg-white/70 backdrop-blur-xl transition-all hover:shadow-md hover:-translate-y-1 ${tenantMenunggak > 0 ? 'border-red-200 bg-red-50/30' : ''}`}>
+          <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
+            <CardTitle className="text-sm font-semibold text-slate-500 uppercase tracking-wider">Tunggakan</CardTitle>
+            <div className={`h-10 w-10 rounded-xl flex items-center justify-center shadow-inner ${tenantMenunggak > 0 ? 'bg-red-100 text-red-600' : 'bg-slate-100 text-slate-600'}`}>
+              <CalendarOff className="h-5 w-5" />
+            </div>
+          </CardHeader>
+          <CardContent>
+            <div className={`text-2xl font-bold ${tenantMenunggak > 0 ? 'text-red-700' : 'text-slate-800'}`}>
+              {tenantMenunggak} <span className="text-sm font-medium">Penghuni</span>
+            </div>
+            <p className={`text-xs font-medium mt-2 ${tenantMenunggak > 0 ? 'text-red-600' : 'text-slate-500'}`}>
+              Lewat batas jatuh tempo
             </p>
           </CardContent>
         </Card>

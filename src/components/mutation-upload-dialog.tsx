@@ -10,6 +10,7 @@ import Papa from "papaparse";
 import { toast } from "sonner";
 import { useRouter } from "next/navigation";
 import { Checkbox } from "@/components/ui/checkbox";
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 
 type Tenant = {
   id: string;
@@ -128,6 +129,11 @@ export function MutationUploadDialog({ activeTenants }: { activeTenants: Tenant[
 
   const toggleSelection = (id: string) => {
     setMatchedMutations(prev => prev.map(m => m.id === id ? { ...m, selected: !m.selected } : m));
+  };
+
+  const setManualTenant = (mutationId: string, tenantId: string) => {
+    const tenant = activeTenants.find(t => t.id === tenantId) || null;
+    setMatchedMutations(prev => prev.map(m => m.id === mutationId ? { ...m, matchedTenant: tenant, selected: !!tenant } : m));
   };
 
   const submitBulk = async () => {
@@ -250,7 +256,7 @@ export function MutationUploadDialog({ activeTenants }: { activeTenants: Tenant[
                   <tr>
                     <th className="p-3 w-10">#</th>
                     <th className="p-3">Tanggal</th>
-                    <th className="p-3 max-w-[200px]">Keterangan Bank</th>
+                    <th className="p-3 min-w-[300px]">Keterangan Bank</th>
                     <th className="p-3">Nominal Masuk</th>
                     <th className="p-3">Tebakan Penghuni (AI)</th>
                   </tr>
@@ -266,22 +272,28 @@ export function MutationUploadDialog({ activeTenants }: { activeTenants: Tenant[
                         />
                       </td>
                       <td className="p-3 font-mono text-xs">{m.date}</td>
-                      <td className="p-3 truncate max-w-[200px]" title={m.description}>{m.description}</td>
+                      <td className="p-3 min-w-[300px] whitespace-normal break-words text-xs leading-relaxed" title={m.description}>{m.description}</td>
                       <td className="p-3 font-semibold text-emerald-600">
                         Rp {m.amount.toLocaleString("id-ID")}
                       </td>
                       <td className="p-3">
-                        {m.matchedTenant ? (
-                          <div className="flex items-center gap-2 text-emerald-700 font-medium">
-                            <Check className="h-4 w-4" />
-                            {m.matchedTenant.name} ({m.matchedTenant.building?.code})
-                          </div>
-                        ) : (
-                          <div className="flex items-center gap-2 text-slate-400">
-                            <X className="h-4 w-4" />
-                            <span className="italic">Tidak Cocok</span>
-                          </div>
-                        )}
+                        <Select 
+                          value={m.matchedTenant?.id || ""} 
+                          onValueChange={(val) => setManualTenant(m.id, val)}
+                        >
+                          <SelectTrigger className={`w-[220px] h-9 text-xs ${m.matchedTenant ? 'border-emerald-200 text-emerald-700 bg-emerald-50' : 'text-slate-500'}`}>
+                            <SelectValue placeholder="Pilih manual penghuni...">
+                              {m.matchedTenant ? `${m.matchedTenant.name} (${m.matchedTenant.building?.code})` : "Pilih manual penghuni..."}
+                            </SelectValue>
+                          </SelectTrigger>
+                          <SelectContent>
+                            {activeTenants.map(t => (
+                              <SelectItem key={t.id} value={t.id} className="text-xs">
+                                {t.name} ({t.building?.code})
+                              </SelectItem>
+                            ))}
+                          </SelectContent>
+                        </Select>
                       </td>
                     </tr>
                   ))}
