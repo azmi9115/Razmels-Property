@@ -2,6 +2,8 @@ import prisma from "@/lib/prisma"
 import { MonitoringGrid } from "@/components/monitoring-grid"
 import { BarChart3 } from "lucide-react"
 
+export const dynamic = "force-dynamic";
+
 export const metadata = {
   title: "Monitoring Sewa — Razmel's Property",
   description: "Pantau status pembayaran sewa seluruh penghuni per bulan."
@@ -23,9 +25,9 @@ export default async function MonitoringPage() {
     ]
   })
 
-  // Generate last 12 months
+  // Generate last 12 months (Newest to Oldest)
   const months: { label: string; year: number; month: number }[] = []
-  for (let i = 11; i >= 0; i--) {
+  for (let i = 0; i <= 11; i++) {
     const d = new Date()
     d.setDate(1)
     d.setMonth(d.getMonth() - i)
