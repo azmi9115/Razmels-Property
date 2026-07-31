@@ -9,6 +9,7 @@ import { getLatestSnapshot } from "@/app/actions/snapshot"
 import { PaginationControls } from "@/components/pagination-controls"
 import { SearchBar } from "@/components/search-bar"
 import { SortSelect } from "@/components/sort-select"
+import { CashflowAnalytics, MonthlyCashflowData, CurrentMonthTarget } from "@/components/cashflow-analytics"
 import { TypeFilter } from "@/components/type-filter"
 
 export default async function CashflowPage(props: { searchParams?: Promise<{ page?: string, query?: string, sort?: string, type?: string }> }) {
@@ -21,6 +22,11 @@ export default async function CashflowPage(props: { searchParams?: Promise<{ pag
 
   const cashflows = await prisma.cashflow.findMany({
     orderBy: { transaction_date: "asc" }
+  });
+
+  const activeTenants = await prisma.tenant.findMany({
+    where: { status: "Active" },
+    include: { building: true, payments: true }
   });
 
   const snapshot = await getLatestSnapshot()
@@ -41,6 +47,72 @@ export default async function CashflowPage(props: { searchParams?: Promise<{ pag
   const totalIncome = cashflows.filter(c => c.type === "Pemasukan").reduce((acc, c) => acc + c.amount, 0)
   const totalExpense = cashflows.filter(c => c.type === "Pengeluaran").reduce((acc, c) => acc + c.amount, 0)
   const finalBalance = totalIncome - totalExpense
+
+  // Calculate monthly data for the last 12 months
+  const monthlyDataMap = new Map<string, MonthlyCashflowData>()
+  for (let i = 11; i >= 0; i--) {
+    const d = new Date()
+    d.setDate(1)
+    d.setMonth(d.getMonth() - i)
+    const monthLabel = d.toLocaleDateString("id-ID", { month: "short", year: "2-digit" })
+    monthlyDataMap.set(monthLabel, { month: monthLabel, income: 0, expense: 0, margin: 0, isHealthy: false })
+  }
+
+  cashflows.forEach(cf => {
+    const d = new Date(cf.transaction_date)
+    d.setDate(1) // Avoid timezone shifts when formatting month
+    const monthLabel = d.toLocaleDateString("id-ID", { month: "short", year: "2-digit" })
+    if (monthlyDataMap.has(monthLabel)) {
+      const data = monthlyDataMap.get(monthLabel)!
+      if (cf.type === "Pemasukan") data.income += cf.amount
+      else if (cf.type === "Pengeluaran") data.expense += cf.amount
+    }
+  })
+
+  const monthlyData = Array.from(monthlyDataMap.values()).map(data => {
+    let margin = 0
+    if (data.income > 0) margin = ((data.income - data.expense) / data.income) * 100
+    else if (data.expense > 0) margin = -100
+    return { ...data, margin, isHealthy: margin > 0 }
+  })
+
+  // Calculate Target
+  let potentialIncome = 0
+  const unachievedReasons: { name: string, room: string, status: string }[] = []
+  
+  const today = new Date()
+  const currentMonth = today.getMonth()
+  const currentYear = today.getFullYear()
+
+  activeTenants.forEach(tenant => {
+    if (tenant.building) {
+      potentialIncome += tenant.building.rent_price
+      
+      const hasPaidThisMonth = tenant.payments.some(p => {
+        const pd = new Date(p.transfer_date)
+        return pd.getMonth() === currentMonth && pd.getFullYear() === currentYear
+      })
+
+      if (!hasPaidThisMonth) {
+        const isLate = tenant.payments.length > 0 && new Date(tenant.payments[tenant.payments.length - 1].rent_end_date) < today
+        unachievedReasons.push({
+          name: tenant.name,
+          room: tenant.building.code,
+          status: isLate ? "TELAT" : "BELUM BAYAR"
+        })
+      }
+    }
+  })
+
+  const currentMonthLabel = today.toLocaleDateString("id-ID", { month: "short", year: "2-digit" })
+  const currentMonthData = monthlyData.find(d => d.month === currentMonthLabel)
+  const actualIncome = currentMonthData ? currentMonthData.income : 0
+  
+  const currentTarget: CurrentMonthTarget = {
+    potentialIncome,
+    actualIncome,
+    unachievedReasons
+  }
 
   // Client-side like filtering
   let filteredCashflows = cashflowsWithBalance.filter(c => {
@@ -101,6 +173,9 @@ export default async function CashflowPage(props: { searchParams?: Promise<{ pag
       </div>
 
       <SnapshotCards snapshot={snapshot} finalBalance={finalBalance} />
+
+      {/* Analytics Section */}
+      <CashflowAnalytics monthlyData={monthlyData} currentTarget={currentTarget} />
 
       {/* Summary Cards */}
       <div className="grid grid-cols-3 gap-4">
