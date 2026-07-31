@@ -131,8 +131,8 @@ export function MutationUploadDialog({ activeTenants }: { activeTenants: Tenant[
     setMatchedMutations(prev => prev.map(m => m.id === id ? { ...m, selected: !m.selected } : m));
   };
 
-  const setManualTenant = (mutationId: string, tenantId: string) => {
-    const tenant = activeTenants.find(t => t.id === tenantId) || null;
+  const setManualTenant = (mutationId: string, tenantId: string | null) => {
+    const tenant = tenantId ? activeTenants.find(t => t.id === tenantId) || null : null;
     setMatchedMutations(prev => prev.map(m => m.id === mutationId ? { ...m, matchedTenant: tenant, selected: !!tenant } : m));
   };
 
