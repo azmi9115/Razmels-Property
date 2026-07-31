@@ -63,9 +63,9 @@ export function MutationUploadDialog({ activeTenants }: { activeTenants: Tenant[
 
           rawData.forEach((row) => {
             // Flexible matching for typical Indonesian bank CSVs (like BRI)
-            const dateStr = row["Tanggal"] || row["Date"] || row["TANGGAL"] || "";
-            const desc = row["Keterangan"] || row["Description"] || row["KETERANGAN"] || row["Berita"] || "";
-            const amountStr = row["Mutasi"] || row["Kredit"] || row["Uang Masuk"] || row["Amount"] || "";
+            const dateStr = row["TGL_TRAN"] || row["Tanggal"] || row["Date"] || row["TANGGAL"] || "";
+            const desc = row["DESK_TRAN"] || row["REMARK_CUSTOM"] || row["Keterangan"] || row["Description"] || row["KETERANGAN"] || row["Berita"] || "";
+            const amountStr = row["MUTASI_KREDIT"] || row["Mutasi"] || row["Kredit"] || row["Uang Masuk"] || row["Amount"] || "";
             
             // Clean up the amount string (remove commas, dots used as thousand separators, etc.)
             // Handle negative amounts if it's a unified 'Mutasi' column (though we want Kredit)
@@ -142,15 +142,14 @@ export function MutationUploadDialog({ activeTenants }: { activeTenants: Tenant[
     try {
       // Prepare payload
       const payments = toSubmit.map(m => {
-        // Parse date properly (assuming DD/MM/YYYY or DD-MM-YYYY)
-        let txDate = new Date();
-        const parts = m.date.split(/[-/]/);
-        if (parts.length >= 3) {
-          // dd, mm, yyyy
-          txDate = new Date(parseInt(parts[2]), parseInt(parts[1]) - 1, parseInt(parts[0]));
-          if (isNaN(txDate.getTime())) txDate = new Date(m.date); // fallback
-        } else {
-          txDate = new Date(m.date); // fallback
+        // Parse date properly. Natively parse YYYY-MM-DD first (BRI format)
+        let txDate = new Date(m.date);
+        if (isNaN(txDate.getTime())) {
+          // fallback for DD/MM/YYYY formats if any
+          const parts = m.date.split(/[-/]/);
+          if (parts.length >= 3) {
+            txDate = new Date(parseInt(parts[2]), parseInt(parts[1]) - 1, parseInt(parts[0]));
+          }
         }
 
         // Calculate end date (assuming 1 month duration)
