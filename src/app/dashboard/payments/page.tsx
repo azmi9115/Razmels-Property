@@ -11,6 +11,8 @@ import { PaginationControls } from "@/components/pagination-controls"
 import Link from "next/link"
 import { Button } from "@/components/ui/button"
 
+export const dynamic = 'force-dynamic';
+
 export default async function PaymentsPage(props: { searchParams?: Promise<{ query?: string, page?: string }> }) {
   const searchParams = await props.searchParams;
   const query = (searchParams?.query || "").toLowerCase();

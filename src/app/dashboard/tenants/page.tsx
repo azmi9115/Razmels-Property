@@ -8,6 +8,8 @@ import { TenantActions } from "@/components/tenant-actions"
 import { SearchBar } from "@/components/search-bar"
 import { PaginationControls } from "@/components/pagination-controls"
 
+export const dynamic = "force-dynamic";
+
 export default async function TenantsPage(props: { searchParams?: Promise<{ query?: string, page?: string }> }) {
   const searchParams = await props.searchParams;
   const query = searchParams?.query || "";

@@ -7,6 +7,8 @@ import { AddBuildingDialog } from "@/components/add-building-dialog"
 import { BuildingActions } from "@/components/building-actions"
 import { SearchBar } from "@/components/search-bar"
 
+export const dynamic = 'force-dynamic';
+
 export default async function BuildingsPage(props: { searchParams?: Promise<{ query?: string }> }) {
   const searchParams = await props.searchParams;
   const query = searchParams?.query || "";

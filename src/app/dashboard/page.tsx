@@ -4,6 +4,8 @@ import prisma from "@/lib/prisma"
 import { CashflowChart } from "@/components/cashflow-chart"
 import { CategoryPieChart } from "@/components/category-pie-chart"
 
+export const dynamic = "force-dynamic";
+
 // Next.js App Router mengizinkan kita melakukan await langsung di komponen
 export default async function DashboardPage() {
   // Mengambil data dari SQLite melalui Prisma
