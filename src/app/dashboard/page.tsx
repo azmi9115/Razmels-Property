@@ -147,6 +147,7 @@ export default async function DashboardPage() {
 
   let potensiPendapatan = 0;
   let tenantMenunggak = 0;
+  let totalTunggakanNilai = 0;
 
   const upcomingDueDates = tenantsWithPayments.map(tenant => {
     potensiPendapatan += tenant.building?.rent_price || 0;
@@ -159,14 +160,20 @@ export default async function DashboardPage() {
     const diffTime = dueDate.getTime() - today.getTime();
     const diffDays = Math.ceil(diffTime / (1000 * 60 * 60 * 24));
     
-    if (diffDays < 0) tenantMenunggak++;
+    const isLate = diffDays < 0;
+    
+    if (isLate) {
+      tenantMenunggak++;
+      const monthsLate = Math.ceil(Math.abs(diffDays) / 30) || 1;
+      totalTunggakanNilai += (tenant.building?.rent_price || 0) * monthsLate;
+    }
 
     return {
       name: tenant.name,
       room: tenant.building?.code || "N/A",
       dueDate: dueDate,
       diffDays: diffDays,
-      isLate: diffDays < 0,
+      isLate: isLate,
       isDueSoon: diffDays >= 0 && diffDays <= 7
     };
   })
@@ -358,10 +365,10 @@ export default async function DashboardPage() {
           </CardHeader>
           <CardContent>
             <div className={`text-2xl font-bold ${tenantMenunggak > 0 ? 'text-red-700' : 'text-slate-800'}`}>
-              {tenantMenunggak} <span className="text-sm font-medium">Penghuni</span>
+              Rp {totalTunggakanNilai.toLocaleString("id-ID")}
             </div>
-            <p className={`text-xs font-medium mt-2 ${tenantMenunggak > 0 ? 'text-red-600' : 'text-slate-500'}`}>
-              Lewat batas jatuh tempo
+            <p className={`text-xs font-medium mt-2 leading-tight ${tenantMenunggak > 0 ? 'text-red-600' : 'text-slate-500'}`}>
+              Dari {tenantMenunggak} orang. Jika lunas, saldo: Rp {(saldoAkhir + totalTunggakanNilai).toLocaleString("id-ID")}
             </p>
           </CardContent>
         </Card>
