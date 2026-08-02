@@ -4,6 +4,18 @@ Catatan kronologis semua perubahan, penambahan fitur, dan pemeliharaan pada sist
 
 ---
 
+## 📅 Minggu, 2 Agustus 2026
+**Status:** Penambahan Fitur & Dokumentasi
+
+### ✨ Ditambahkan (Added)
+- **Prediksi Arus Kas dari Tunggakan**: Menambahkan kotak khusus di Dashboard dan halaman Cash Flow untuk menghitung dan menampilkan estimasi uang yang akan masuk jika seluruh penyewa yang menunggak melunasi tagihannya.
+- **Aturan Deploy Otomatis (VPS)**: Meng-update instruksi di file `AGENTS.md` agar asisten AI mengerti bahwa VPS tidak memiliki fitur *auto-deploy* bawaan, sehingga AI wajib melakukan SSH secara mandiri untuk mengeksekusi *pull* dan *rebuild Docker* setelah *push* ke GitHub.
+
+### 🛠️ Diperbaiki (Fixed)
+- **Error Git Branch di Live Server**: Memperbaiki insiden salah *branch* di mana asisten AI secara tidak sengaja me-reset ke `main` padahal kode terbaru berada di *branch* `fitur-verifikasi-mutasi`. Semua fitur terbaru sudah dipulihkan dan ditanamkan ke *branch* yang tepat.
+
+---
+
 ## 📅 Rabu, 24 Juni 2026
 **Status:** Penambahan Fitur & *Maintenance*
 
