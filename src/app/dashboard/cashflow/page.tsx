@@ -42,6 +42,36 @@ export default async function CashflowPage(props: { searchParams?: Promise<{ pag
   const totalExpense = cashflows.filter(c => c.type === "Pengeluaran").reduce((acc, c) => acc + c.amount, 0)
   const finalBalance = totalIncome - totalExpense
 
+  // Calculate arrears (Tunggakan)
+  const tenantsWithPayments = await prisma.tenant.findMany({
+    where: { status: "Active" },
+    include: {
+      building: true,
+      payments: {
+        orderBy: { rent_end_date: "desc" },
+        take: 1
+      }
+    }
+  });
+
+  const today = new Date();
+  today.setHours(0, 0, 0, 0);
+
+  let totalTunggakanNilai = 0;
+  tenantsWithPayments.forEach(tenant => {
+    const dueDate = tenant.payments && tenant.payments.length > 0 
+      ? new Date(tenant.payments[0].rent_end_date)
+      : new Date(tenant.entry_date);
+    dueDate.setHours(0, 0, 0, 0);
+    const diffTime = dueDate.getTime() - today.getTime();
+    const diffDays = Math.ceil(diffTime / (1000 * 60 * 60 * 24));
+    
+    if (diffDays < 0) {
+      const monthsLate = Math.ceil(Math.abs(diffDays) / 30) || 1;
+      totalTunggakanNilai += (tenant.building?.rent_price || 0) * monthsLate;
+    }
+  });
+
   // Client-side like filtering
   let filteredCashflows = cashflowsWithBalance.filter(c => {
     // Type Filter
@@ -103,7 +133,7 @@ export default async function CashflowPage(props: { searchParams?: Promise<{ pag
       <SnapshotCards snapshot={snapshot} finalBalance={finalBalance} />
 
       {/* Summary Cards */}
-      <div className="grid grid-cols-3 gap-4">
+      <div className="grid grid-cols-2 lg:grid-cols-4 gap-4">
         <Card className="border-slate-200/60 shadow-sm bg-white/70 backdrop-blur-xl">
           <CardContent className="pt-5 pb-4">
             <div className="flex items-center justify-between mb-1">
@@ -137,6 +167,24 @@ export default async function CashflowPage(props: { searchParams?: Promise<{ pag
             <p className={`text-xl font-bold ${finalBalance >= 0 ? "text-blue-700" : "text-red-600"}`}>
               Rp {finalBalance.toLocaleString("id-ID")}
             </p>
+          </CardContent>
+        </Card>
+        <Card className={`border-slate-200/60 shadow-sm backdrop-blur-xl ${totalTunggakanNilai > 0 ? 'bg-orange-50' : 'bg-white/70'}`}>
+          <CardContent className="pt-5 pb-4">
+            <div className="flex items-center justify-between mb-1">
+              <span className={`text-xs font-semibold uppercase tracking-wider ${totalTunggakanNilai > 0 ? 'text-orange-600' : 'text-slate-500'}`}>Potensi Pemulihan Kas</span>
+              <div className={`h-7 w-7 rounded-lg flex items-center justify-center ${totalTunggakanNilai > 0 ? 'bg-orange-100' : 'bg-slate-100'}`}>
+                <Wallet className={`h-4 w-4 ${totalTunggakanNilai > 0 ? 'text-orange-600' : 'text-slate-600'}`} />
+              </div>
+            </div>
+            <div className={`text-xl font-bold ${totalTunggakanNilai > 0 ? 'text-orange-700' : 'text-slate-800'}`}>
+              Rp {totalTunggakanNilai.toLocaleString("id-ID")}
+            </div>
+            {totalTunggakanNilai > 0 && (
+              <p className="text-[10px] text-orange-600 mt-1 font-medium leading-tight">
+                Max Saldo: Rp {(finalBalance + totalTunggakanNilai).toLocaleString("id-ID")}
+              </p>
+            )}
           </CardContent>
         </Card>
       </div>

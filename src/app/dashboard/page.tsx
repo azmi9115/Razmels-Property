@@ -118,6 +118,9 @@ export default async function DashboardPage() {
   const today = new Date();
   today.setHours(0, 0, 0, 0);
 
+  let totalTunggakanNilai = 0;
+  let tenantMenunggak = 0;
+
   const upcomingDueDates = tenantsWithPayments.map(tenant => {
     const dueDate = tenant.payments && tenant.payments.length > 0 
       ? new Date(tenant.payments[0].rent_end_date)
@@ -127,18 +130,28 @@ export default async function DashboardPage() {
     const diffTime = dueDate.getTime() - today.getTime();
     const diffDays = Math.ceil(diffTime / (1000 * 60 * 60 * 24));
     
+    const isLate = diffDays < 0;
+    
+    if (isLate) {
+      tenantMenunggak++;
+      const monthsLate = Math.ceil(Math.abs(diffDays) / 30) || 1;
+      totalTunggakanNilai += (tenant.building?.rent_price || 0) * monthsLate;
+    }
+    
     return {
       name: tenant.name,
       room: tenant.building?.code || "N/A",
       dueDate: dueDate,
       diffDays: diffDays,
-      isLate: diffDays < 0,
+      isLate: isLate,
       isDueSoon: diffDays >= 0 && diffDays <= 7
     };
   })
   .filter(item => item.isLate || item.diffDays <= 30) // Only show late or due within 30 days
   .sort((a, b) => a.diffDays - b.diffDays)
   .slice(0, 5); // Take top 5
+  
+  const finalBalance = income - expense;
 
   return (
     <div className="space-y-8 animate-in fade-in slide-in-from-bottom-4 duration-700 ease-out">
@@ -162,7 +175,7 @@ export default async function DashboardPage() {
         </a>
       </div>
 
-      <div className="grid gap-6 md:grid-cols-2 lg:grid-cols-4">
+      <div className="grid gap-6 md:grid-cols-2 lg:grid-cols-5">
         {/* Pemasukan Card */}
         <Card className="border-slate-200/60 shadow-sm bg-white/70 backdrop-blur-xl transition-all hover:shadow-md hover:-translate-y-1">
           <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
@@ -234,6 +247,24 @@ export default async function DashboardPage() {
             </div>
             <p className="text-xs text-muted-foreground mt-2 font-medium">
               Siap untuk disewakan
+            </p>
+          </CardContent>
+        </Card>
+        
+        {/* Tunggakan Card */}
+        <Card className={`border-slate-200/60 shadow-sm backdrop-blur-xl transition-all hover:shadow-md hover:-translate-y-1 ${tenantMenunggak > 0 ? 'bg-orange-50/50 border-orange-200/60' : 'bg-white/70'}`}>
+          <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
+            <CardTitle className={`text-sm font-semibold uppercase tracking-wider ${tenantMenunggak > 0 ? 'text-orange-600' : 'text-slate-500'}`}>Tunggakan</CardTitle>
+            <div className={`h-10 w-10 rounded-xl flex items-center justify-center shadow-inner ${tenantMenunggak > 0 ? 'bg-orange-100 text-orange-600' : 'bg-slate-100 text-slate-600'}`}>
+              <AlertCircle className="h-5 w-5" />
+            </div>
+          </CardHeader>
+          <CardContent>
+            <div className={`text-2xl font-bold ${tenantMenunggak > 0 ? 'text-orange-700' : 'text-slate-800'}`}>
+              Rp {totalTunggakanNilai.toLocaleString("id-ID")}
+            </div>
+            <p className={`text-[11px] font-medium mt-2 leading-tight ${tenantMenunggak > 0 ? 'text-orange-600' : 'text-muted-foreground'}`}>
+              Dari {tenantMenunggak} orang. Jika lunas, saldo: Rp {(finalBalance + totalTunggakanNilai).toLocaleString("id-ID")}
             </p>
           </CardContent>
         </Card>
