@@ -57,7 +57,7 @@ export default function LoginPage() {
 <section className="relative hidden lg:flex lg:w-1/2 overflow-hidden items-center justify-center">
 
 <div className="absolute top-8 left-8 z-50 animate-in fade-in slide-in-from-top-8 duration-1000">
-<img alt="Razmel's Property Logo" className="h-32 md:h-40 w-auto object-contain mix-blend-screen hover:scale-105 transition-transform duration-500 rounded-3xl" src="/logo-razmel.png"/>
+<img alt="Razmel's Property Logo" className="h-32 md:h-40 w-auto object-contain mix-blend-screen hover:scale-105 transition-transform duration-500 rounded-[2rem]" src="/logo-razmel.png"/>
 </div>
 
 <div className="absolute inset-0 z-0 bg-cover bg-center transition-transform duration-[10000ms] hover:scale-110" data-alt="A cinematic, low-angle photograph of a modern glass and steel luxury residential skyscraper against a twilight sky. The building is illuminated with warm interior lights that contrast against the cool, deep blue atmosphere. The architectural lines are sharp and minimalist, reflecting a high-end cyber-professional aesthetic with deep shadows and sophisticated atmosphere." style={{"backgroundImage": "url('https://lh3.googleusercontent.com/aida-public/AB6AXuBLTzt2JlgR-e2mjlfNG7N0h1F5dOx9Ey3SV-xRBfKfWWzeY1D4PCxSW57MxTcyXKi5kRwCeExgCP13BRsdXkJOyHoHnvdY4ZMh82i-MRQhh1AQ6yKn6evtTv-aQl53AfdOtixHdehaW8cMx5iOsYGBR3Czpn7DvxOZ1yfJJV0QQjIchhImPoY66jQw1ddu_shYUbrP9MgXX0soSsXIhhSeWFC3BBGJlFYc-hQtSY0rYaqYP3aN9GXxOA')", }}>
@@ -98,7 +98,7 @@ export default function LoginPage() {
 </a>
 
 <div className="lg:hidden mb-12 flex justify-center w-full mt-16">
-<img alt="Razmel's Property Logo" className="h-16 w-auto object-contain" src="/logo-razmel.png"/>
+<img alt="Razmel's Property Logo" className="h-16 w-auto object-contain rounded-[1.5rem]" src="/logo-razmel.png"/>
 </div>
 <div className="w-full max-w-md space-y-8 mt-8 lg:mt-0">
 
@@ -150,7 +150,7 @@ export default function LoginPage() {
 
 
 <button className="w-full py-4 px-6 bg-primary hover:bg-on-primary-container text-white font-headline-md text-headline-md rounded-xl shadow-lg shadow-primary/10 hover:shadow-primary/20 transform active:scale-95 transition-all duration-300 flex items-center justify-center gap-3 whitespace-nowrap flex-nowrap" type="submit" disabled={loading}>
-  {loading ? "Memverifikasi..." : "Masuk ke Dashboard"}
+  {loading ? "Memverifikasi..." : "Login to Dashboard"}
   {!loading && <span className="material-symbols-outlined">arrow_forward</span>}
 </button>
 
