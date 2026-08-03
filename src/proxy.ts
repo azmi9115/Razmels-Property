@@ -4,8 +4,8 @@ import type { NextRequest } from "next/server"
 
 export default async function proxy(request: NextRequest) {
   const path = request.nextUrl.pathname
-  
-  if (path.startsWith("/dashboard") || path === "/") {
+
+  if (path.startsWith("/dashboard")) {
     const token = await getToken({ req: request, secret: process.env.NEXTAUTH_SECRET || "razmels_super_secret_key_123!" })
     if (!token) {
       return NextResponse.redirect(new URL("/login", request.url))
@@ -17,7 +17,6 @@ export default async function proxy(request: NextRequest) {
 
 export const config = {
   matcher: [
-    "/dashboard/:path*",
-    "/"
+    "/dashboard/:path*"
   ]
 }
