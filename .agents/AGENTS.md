@@ -29,3 +29,4 @@ Dokumen ini adalah aturan otomatis yang akan dimuat oleh AI Asisten di setiap se
 ## 6. Aturan Prisma
 - Pada fase development, jika merubah struktur database SQLite dan ada *warning* kemungkinan data terhapus, gunakan `npx prisma db push --accept-data-loss`.
 - Selalu ingat untuk memanggil `npx prisma generate` jika ada perubahan pada `schema.prisma`.
+- RULE: Selalu lakukan pengujian (test) fitur baru secara lokal sebelum melakukan push ke GitHub atau deploy ke server produksi/VPS.

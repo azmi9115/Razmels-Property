@@ -82,11 +82,11 @@ export default async function CashflowPage(props: { searchParams?: Promise<{ pag
     const dateStr = new Date(c.transaction_date).toLocaleDateString("id-ID", {
       day: "numeric", month: "short", year: "numeric"
     }).toLowerCase();
-    
-    return c.category.toLowerCase().includes(query) || 
-           c.description.toLowerCase().includes(query) ||
-           c.amount.toString().includes(query) ||
-           dateStr.includes(query);
+
+    return c.category.toLowerCase().includes(query) ||
+      c.description.toLowerCase().includes(query) ||
+      c.amount.toString().includes(query) ||
+      dateStr.includes(query);
   });
 
   // Sorting
@@ -231,47 +231,47 @@ export default async function CashflowPage(props: { searchParams?: Promise<{ pag
                   paginatedCashflows.map((cf) => {
                     const isIncome = cf.type === "Pemasukan";
                     return (
-                    <TableRow key={cf.id} className="hover:bg-slate-50/50 transition-colors">
-                      <TableCell className="text-slate-600 font-medium">
-                        {new Date(cf.transaction_date).toLocaleDateString("id-ID", {
-                          day: "numeric",
-                          month: "short",
-                          year: "numeric",
-                        })}
-                      </TableCell>
-                      <TableCell>
-                        <div className="flex items-center gap-2">
-                          {isIncome ? (
-                            <div className="h-6 w-6 rounded-md bg-green-100 text-green-600 flex items-center justify-center">
-                              <ArrowUpRight className="h-3.5 w-3.5" />
-                            </div>
-                          ) : (
-                            <div className="h-6 w-6 rounded-md bg-red-100 text-red-600 flex items-center justify-center">
-                              <ArrowDownRight className="h-3.5 w-3.5" />
-                            </div>
-                          )}
-                          <span className="font-semibold text-slate-800">{cf.category}</span>
-                        </div>
-                      </TableCell>
-                      <TableCell className="text-slate-600 max-w-xs truncate">
-                        {cf.description}
-                      </TableCell>
-                      <TableCell className="text-right">
-                        <span className={`font-bold ${isIncome ? "text-emerald-600" : "text-red-600"}`}>
-                          {isIncome ? "+" : "-"} Rp {cf.amount.toLocaleString("id-ID")}
-                        </span>
-                      </TableCell>
-                      <TableCell className="text-right">
-                        <span className={`text-sm font-semibold ${cf.balance >= 0 ? "text-blue-700" : "text-red-600"}`}>
-                          Rp {cf.balance.toLocaleString("id-ID")}
-                        </span>
-                      </TableCell>
-                      <TableCell>
-                        <CashflowActions id={cf.id} />
-                      </TableCell>
-                    </TableRow>
-                  );
-                }))}
+                      <TableRow key={cf.id} className="hover:bg-slate-50/50 transition-colors">
+                        <TableCell className="text-slate-600 font-medium">
+                          {new Date(cf.transaction_date).toLocaleDateString("id-ID", {
+                            day: "numeric",
+                            month: "short",
+                            year: "numeric",
+                          })}
+                        </TableCell>
+                        <TableCell>
+                          <div className="flex items-center gap-2">
+                            {isIncome ? (
+                              <div className="h-6 w-6 rounded-md bg-green-100 text-green-600 flex items-center justify-center">
+                                <ArrowUpRight className="h-3.5 w-3.5" />
+                              </div>
+                            ) : (
+                              <div className="h-6 w-6 rounded-md bg-red-100 text-red-600 flex items-center justify-center">
+                                <ArrowDownRight className="h-3.5 w-3.5" />
+                              </div>
+                            )}
+                            <span className="font-semibold text-slate-800">{cf.category}</span>
+                          </div>
+                        </TableCell>
+                        <TableCell className="text-slate-600 max-w-xs truncate">
+                          {cf.description}
+                        </TableCell>
+                        <TableCell className="text-right">
+                          <span className={`font-bold ${isIncome ? "text-emerald-600" : "text-red-600"}`}>
+                            {isIncome ? "+" : "-"} Rp {cf.amount.toLocaleString("id-ID")}
+                          </span>
+                        </TableCell>
+                        <TableCell className="text-right">
+                          <span className={`text-sm font-semibold ${cf.balance >= 0 ? "text-blue-700" : "text-red-600"}`}>
+                            Rp {cf.balance.toLocaleString("id-ID")}
+                          </span>
+                        </TableCell>
+                        <TableCell>
+                          <CashflowActions id={cf.id} />
+                        </TableCell>
+                      </TableRow>
+                    );
+                  }))}
               </TableBody>
             </Table>
           </div>

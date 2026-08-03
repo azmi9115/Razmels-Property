@@ -1,0 +1,301 @@
+<!DOCTYPE html>
+
+<html class="light" lang="id"><head>
+<meta charset="utf-8"/>
+<meta content="width=device-width, initial-scale=1.0" name="viewport"/>
+<script src="https://cdn.tailwindcss.com?plugins=forms,container-queries"></script>
+<link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;600;700;800&amp;family=Inter:wght@400;500;600&amp;display=swap" rel="stylesheet"/>
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet"/>
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet"/>
+<script id="tailwind-config">
+      tailwind.config = {
+        darkMode: "class",
+        theme: {
+          extend: {
+            "colors": {
+                    "nav-text": "#94A3B8",
+                    "tertiary": "#000000",
+                    "border-subtle": "#E2E8F0",
+                    "nav-bg": "#0F172A",
+                    "on-primary-fixed-variant": "#3f465c",
+                    "on-error": "#ffffff",
+                    "primary-fixed": "#dae2fd",
+                    "sidebar-active": "#1E293B",
+                    "error": "#ba1a1a",
+                    "background": "#f7f9fb",
+                    "tertiary-fixed-dim": "#89ceff",
+                    "surface-container": "#eceef0",
+                    "surface-container-lowest": "#ffffff",
+                    "primary": "#000000",
+                    "on-surface": "#191c1e",
+                    "on-primary": "#ffffff",
+                    "tertiary-fixed": "#c9e6ff",
+                    "surface-container-highest": "#e0e3e5",
+                    "on-primary-fixed": "#131b2e",
+                    "on-tertiary-fixed-variant": "#004c6e",
+                    "primary-fixed-dim": "#bec6e0",
+                    "on-tertiary": "#ffffff",
+                    "primary-container": "#131b2e",
+                    "on-surface-variant": "#45464d",
+                    "slate-text": "#64748B",
+                    "surface-dim": "#d8dadc",
+                    "secondary-container": "#2170e4",
+                    "on-error-container": "#93000a",
+                    "inverse-surface": "#2d3133",
+                    "inverse-on-surface": "#eff1f3",
+                    "on-secondary-fixed": "#001a42",
+                    "surface-tint": "#565e74",
+                    "on-tertiary-fixed": "#001e2f",
+                    "error-container": "#ffdad6",
+                    "surface": "#f7f9fb",
+                    "secondary-fixed-dim": "#adc6ff",
+                    "on-secondary": "#ffffff",
+                    "outline-variant": "#c6c6cd",
+                    "surface-variant": "#e0e3e5",
+                    "surface-container-low": "#f2f4f6",
+                    "surface-bright": "#f7f9fb",
+                    "on-tertiary-container": "#008cc7",
+                    "secondary-fixed": "#d8e2ff",
+                    "on-secondary-container": "#fefcff",
+                    "secondary": "#0058be",
+                    "outline": "#76777d",
+                    "on-secondary-fixed-variant": "#004395",
+                    "tertiary-container": "#001e2f",
+                    "inverse-primary": "#bec6e0",
+                    "on-background": "#191c1e",
+                    "on-primary-container": "#7c839b",
+                    "surface-container-high": "#e6e8ea"
+            },
+            "borderRadius": {
+                    "DEFAULT": "0.25rem",
+                    "lg": "0.5rem",
+                    "xl": "0.75rem",
+                    "full": "9999px"
+            },
+            "spacing": {
+                    "margin-mobile": "16px",
+                    "unit": "4px",
+                    "sidebar-width": "260px",
+                    "gutter": "24px",
+                    "margin-desktop": "32px"
+            },
+            "fontFamily": {
+                    "headline-lg-mobile": ["Plus Jakarta Sans"],
+                    "body-lg": ["Inter"],
+                    "headline-lg": ["Plus Jakarta Sans"],
+                    "label-md": ["Inter"],
+                    "headline-xl": ["Plus Jakarta Sans"],
+                    "headline-md": ["Plus Jakarta Sans"],
+                    "body-md": ["Inter"]
+            },
+            "fontSize": {
+                    "headline-lg-mobile": ["24px", {"lineHeight": "32px", "fontWeight": "600"}],
+                    "body-lg": ["16px", {"lineHeight": "24px", "fontWeight": "400"}],
+                    "headline-lg": ["28px", {"lineHeight": "36px", "letterSpacing": "-0.01em", "fontWeight": "600"}],
+                    "label-md": ["12px", {"lineHeight": "16px", "letterSpacing": "0.05em", "fontWeight": "600"}],
+                    "headline-xl": ["36px", {"lineHeight": "44px", "letterSpacing": "-0.02em", "fontWeight": "700"}],
+                    "headline-md": ["20px", {"lineHeight": "28px", "fontWeight": "600"}],
+                    "body-md": ["14px", {"lineHeight": "20px", "fontWeight": "400"}]
+            }
+          },
+        },
+      }
+    </script>
+<style>
+        .material-symbols-outlined {
+            font-variation-settings: 'FILL' 0, 'wght' 400, 'GRAD' 0, 'opsz' 24;
+            vertical-align: middle;
+        }
+        .fill-icon {
+            font-variation-settings: 'FILL' 1;
+        }
+        .glass-overlay {
+            background: rgba(15, 23, 42, 0.65);
+            backdrop-filter: blur(8px);
+        }
+        .focus-ring:focus {
+            outline: none;
+            box-shadow: 0 0 0 2px #3B82F6;
+        }
+        .transition-cubic {
+            transition-timing-function: cubic-bezier(0.4, 0, 0.2, 1);
+        }
+    </style>
+</head>
+<body class="bg-surface text-on-background min-h-screen overflow-x-hidden font-body-md">
+<!-- Split Screen Layout -->
+<main class="flex min-h-screen">
+<!-- Branding Side (Left - Hidden on Mobile) -->
+<section class="relative hidden lg:flex lg:w-1/2 overflow-hidden items-center justify-center">
+<!-- Background Image Container -->
+<div class="absolute inset-0 z-0 bg-cover bg-center transition-transform duration-[10000ms] hover:scale-110" data-alt="A cinematic, low-angle photograph of a modern glass and steel luxury residential skyscraper against a twilight sky. The building is illuminated with warm interior lights that contrast against the cool, deep blue atmosphere. The architectural lines are sharp and minimalist, reflecting a high-end cyber-professional aesthetic with deep shadows and sophisticated atmosphere." style="background-image: url('https://lh3.googleusercontent.com/aida-public/AB6AXuBLTzt2JlgR-e2mjlfNG7N0h1F5dOx9Ey3SV-xRBfKfWWzeY1D4PCxSW57MxTcyXKi5kRwCeExgCP13BRsdXkJOyHoHnvdY4ZMh82i-MRQhh1AQ6yKn6evtTv-aQl53AfdOtixHdehaW8cMx5iOsYGBR3Czpn7DvxOZ1yfJJV0QQjIchhImPoY66jQw1ddu_shYUbrP9MgXX0soSsXIhhSeWFC3BBGJlFYc-hQtSY0rYaqYP3aN9GXxOA')">
+</div>
+<!-- Atmospheric Dark Overlay -->
+<div class="absolute inset-0 bg-gradient-to-tr from-nav-bg/90 via-nav-bg/60 to-transparent z-10"></div>
+<!-- Branding Content -->
+<div class="relative z-20 px-margin-desktop text-white max-w-xl">
+<div class="mb-8">
+<img alt="Razmel's Property Logo" class="h-16 w-auto object-contain" src="https://lh3.googleusercontent.com/aida/AP1WRLvn_ZIgptA6HWug51YB0uNLrC6spgciL64KXnwuqRHpdKBQFAIH7-GGKKXcloLVJnaHvogg5dbFRB2xFl1IltEH84oRti0rszS2bBEGgDtf6Q-cvk0PC7v2makkzYdpYRERb8XCpSivBfQb0Z6wtAzOg4DNDjYdJ0lpAV4RU_O-KX6p0EGe6CzJF58LuWg9hSn55t0HlttojlrlMrezumwaKOffa1oPTd4uoAC1-ZhZ_NfEQGicgI_u8Wpn"/>
+</div>
+<h1 class="font-headline-xl text-headline-xl mb-6 leading-tight">
+                    Redefining Property <br/><span class="text-secondary-fixed-dim">Management</span>.
+                </h1>
+<p class="font-body-lg text-body-lg text-nav-text mb-12 max-w-md">
+                    Seamless operations, intelligent analytics, and elevated living experiences. Designed for the modern landlord.
+                </p>
+<!-- Micro-Feature Chips -->
+<div class="flex flex-wrap gap-4">
+<div class="glass-overlay px-4 py-2 rounded-full border border-white/10 flex items-center gap-2">
+<span class="material-symbols-outlined text-sm">verified_user</span>
+<span class="text-label-md font-label-md">Secure Platform</span>
+</div>
+<div class="glass-overlay px-4 py-2 rounded-full border border-white/10 flex items-center gap-2">
+<span class="material-symbols-outlined text-sm">monitoring</span>
+<span class="text-label-md font-label-md">Real-time Analytics</span>
+</div>
+</div>
+</div>
+<!-- Footer-like credit -->
+<div class="absolute bottom-12 left-margin-desktop z-20">
+<p class="text-slate-text text-body-md">© 2024 Razmel’s Property Management. All rights reserved.</p>
+</div>
+</section>
+<!-- Login Form Side (Right) -->
+<section class="w-full lg:w-1/2 bg-surface-bright flex flex-col items-center justify-center p-margin-mobile md:p-margin-desktop">
+<!-- Mobile Brand Logo -->
+<div class="lg:hidden mb-12 flex items-center gap-3">
+<span class="material-symbols-outlined text-primary text-3xl fill-icon">apartment</span>
+<span class="font-headline-md text-headline-md font-bold text-primary">Razmel's Property</span>
+</div>
+<div class="w-full max-w-md space-y-8">
+<!-- Header Text -->
+<div class="text-center lg:text-left">
+<h2 class="font-headline-lg text-headline-lg text-primary mb-2">Welcome back</h2>
+<p class="font-body-md text-body-md text-slate-text">Please enter your credentials to access the admin panel.</p>
+</div>
+<!-- Form Container -->
+<form class="space-y-6" id="login-form" onsubmit="return false;">
+<!-- Username Field -->
+<div class="space-y-2">
+<label class="font-label-md text-label-md text-primary uppercase tracking-wider block" for="username">Username</label>
+<div class="relative group">
+<span class="absolute inset-y-0 left-0 pl-4 flex items-center text-slate-text group-focus-within:text-secondary transition-colors">
+<span class="material-symbols-outlined text-xl">person</span>
+</span>
+<input class="w-full pl-12 pr-4 py-4 bg-surface-container-low border border-border-subtle rounded-xl font-body-md text-body-md text-on-surface focus:ring-2 focus:ring-secondary/20 focus:border-secondary bg-white focus:bg-white transition-all duration-300" id="username" placeholder="Enter your username" type="text"/>
+</div>
+</div>
+<!-- Password Field -->
+<div class="space-y-2">
+<div class="flex justify-between items-center">
+<label class="font-label-md text-label-md text-primary uppercase tracking-wider block" for="password">Password</label>
+<a class="text-label-md font-label-md text-secondary hover:underline transition-all" href="#">Forgot Password?</a>
+</div>
+<div class="relative group">
+<span class="absolute inset-y-0 left-0 pl-4 flex items-center text-slate-text group-focus-within:text-secondary transition-colors">
+<span class="material-symbols-outlined text-xl">lock</span>
+</span>
+<input class="w-full pl-12 pr-12 py-4 bg-surface-container-low border border-border-subtle rounded-xl font-body-md text-body-md text-on-surface focus:ring-2 focus:ring-secondary/20 focus:border-secondary bg-white focus:bg-white transition-all duration-300" id="password" placeholder="••••••••" type="password"/>
+<button class="absolute inset-y-0 right-0 pr-4 flex items-center text-slate-text hover:text-primary transition-colors" type="button">
+<span class="material-symbols-outlined text-xl">visibility</span>
+</button>
+</div>
+</div>
+<!-- Options Row -->
+<div class="flex items-center">
+<label class="flex items-center cursor-pointer group">
+<input class="w-5 h-5 rounded-md border-border-subtle text-secondary focus:ring-secondary cursor-pointer transition-colors" type="checkbox"/>
+<span class="ml-3 font-body-md text-body-md text-slate-text group-hover:text-primary transition-colors">Remember me on this device</span>
+</label>
+</div>
+<!-- Submit Button -->
+<button class="w-full py-4 px-6 bg-primary hover:bg-on-primary-container text-white font-headline-md text-headline-md rounded-xl shadow-lg shadow-primary/10 hover:shadow-primary/20 transform active:scale-95 transition-all duration-300 flex items-center justify-center gap-3" type="submit">
+                        Masuk ke Dashboard
+                        <span class="material-symbols-outlined">arrow_forward</span>
+</button>
+</form>
+<!-- Divider -->
+<div class="relative py-4">
+<div class="absolute inset-0 flex items-center"><div class="w-full border-t border-border-subtle"></div></div>
+<div class="relative flex justify-center text-label-md font-label-md uppercase tracking-widest"><span class="bg-surface-bright px-4 text-slate-text">Identity Verified</span></div>
+</div>
+<!-- Footer Notes -->
+<div class="space-y-6 text-center">
+<div class="flex items-center justify-center gap-2 p-3 bg-surface-container-low rounded-lg inline-flex mx-auto">
+<span class="material-symbols-outlined text-secondary text-lg">dark_mode</span>
+<span class="text-body-md text-slate-text">Dark Mode available in dashboard</span>
+</div>
+<div class="flex justify-center gap-6">
+<a class="text-body-md text-slate-text hover:text-primary transition-colors" href="#">Help Center</a>
+<span class="text-border-subtle">|</span>
+<a class="text-body-md text-slate-text hover:text-primary transition-colors" href="#">Privacy Policy</a>
+</div>
+</div>
+</div>
+</section>
+</main>
+<!-- Success Feedback Overlay (Hidden by default) -->
+<div class="fixed inset-0 z-50 flex items-center justify-center bg-nav-bg/40 backdrop-blur-sm hidden opacity-0 transition-opacity duration-300" id="success-feedback">
+<div class="bg-white p-8 rounded-2xl shadow-2xl flex flex-col items-center gap-4 max-w-xs text-center scale-90 transition-transform duration-300" id="feedback-card">
+<div class="w-16 h-16 bg-secondary/10 rounded-full flex items-center justify-center">
+<span class="material-symbols-outlined text-secondary text-4xl" style="font-variation-settings: 'FILL' 1;">check_circle</span>
+</div>
+<div>
+<h3 class="font-headline-md text-headline-md text-primary">Authenticating...</h3>
+<p class="font-body-md text-body-md text-slate-text mt-1">Redirecting you to the command center.</p>
+</div>
+<div class="w-full h-1.5 bg-surface-container rounded-full overflow-hidden">
+<div class="h-full bg-secondary animate-[loading_2s_ease-in-out]"></div>
+</div>
+</div>
+</div>
+<script>
+        // Micro-interactions for login
+        const form = document.getElementById('login-form');
+        const feedback = document.getElementById('success-feedback');
+        const feedbackCard = document.getElementById('feedback-card');
+
+        form.addEventListener('submit', (e) => {
+            e.preventDefault();
+            
+            // Show feedback overlay
+            feedback.classList.remove('hidden');
+            setTimeout(() => {
+                feedback.classList.add('opacity-100');
+                feedbackCard.classList.remove('scale-90');
+                feedbackCard.classList.add('scale-100');
+            }, 10);
+
+            // Simulation of redirect
+            setTimeout(() => {
+                window.location.reload(); // Placeholder action
+            }, 2500);
+        });
+
+        // Add input focus effects
+        const inputs = document.querySelectorAll('input');
+        inputs.forEach(input => {
+            input.addEventListener('focus', () => {
+                input.parentElement.classList.add('ring-2', 'ring-secondary/20');
+            });
+            input.addEventListener('blur', () => {
+                input.parentElement.classList.remove('ring-2', 'ring-secondary/20');
+            });
+        });
+
+        // Toggle Password Visibility
+        const togglePass = document.querySelector('button[type="button"]');
+        const passInput = document.getElementById('password');
+        togglePass.addEventListener('click', () => {
+            const isPassword = passInput.type === 'password';
+            passInput.type = isPassword ? 'text' : 'password';
+            togglePass.querySelector('span').textContent = isPassword ? 'visibility_off' : 'visibility';
+        });
+    </script>
+<style>
+        @keyframes loading {
+            0% { width: 0%; }
+            100% { width: 100%; }
+        }
+    </style>
+</body></html>

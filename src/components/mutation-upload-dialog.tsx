@@ -10,6 +10,7 @@ import Papa from "papaparse";
 import { toast } from "sonner";
 import { useRouter } from "next/navigation";
 import { Checkbox } from "@/components/ui/checkbox";
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 
 type Tenant = {
   id: string;
@@ -63,9 +64,9 @@ export function MutationUploadDialog({ activeTenants }: { activeTenants: Tenant[
 
           rawData.forEach((row) => {
             // Flexible matching for typical Indonesian bank CSVs (like BRI)
-            const dateStr = row["Tanggal"] || row["Date"] || row["TANGGAL"] || "";
-            const desc = row["Keterangan"] || row["Description"] || row["KETERANGAN"] || row["Berita"] || "";
-            const amountStr = row["Mutasi"] || row["Kredit"] || row["Uang Masuk"] || row["Amount"] || "";
+            const dateStr = row["TGL_TRAN"] || row["Tanggal"] || row["Date"] || row["TANGGAL"] || "";
+            const desc = row["DESK_TRAN"] || row["REMARK_CUSTOM"] || row["Keterangan"] || row["Description"] || row["KETERANGAN"] || row["Berita"] || "";
+            const amountStr = row["MUTASI_KREDIT"] || row["Mutasi"] || row["Kredit"] || row["Uang Masuk"] || row["Amount"] || "";
             
             // Clean up the amount string (remove commas, dots used as thousand separators, etc.)
             // Handle negative amounts if it's a unified 'Mutasi' column (though we want Kredit)
@@ -130,6 +131,11 @@ export function MutationUploadDialog({ activeTenants }: { activeTenants: Tenant[
     setMatchedMutations(prev => prev.map(m => m.id === id ? { ...m, selected: !m.selected } : m));
   };
 
+  const setManualTenant = (mutationId: string, tenantId: string | null) => {
+    const tenant = tenantId ? activeTenants.find(t => t.id === tenantId) || null : null;
+    setMatchedMutations(prev => prev.map(m => m.id === mutationId ? { ...m, matchedTenant: tenant, selected: !!tenant } : m));
+  };
+
   const submitBulk = async () => {
     const toSubmit = matchedMutations.filter(m => m.selected && m.matchedTenant);
     
@@ -142,15 +148,14 @@ export function MutationUploadDialog({ activeTenants }: { activeTenants: Tenant[
     try {
       // Prepare payload
       const payments = toSubmit.map(m => {
-        // Parse date properly (assuming DD/MM/YYYY or DD-MM-YYYY)
-        let txDate = new Date();
-        const parts = m.date.split(/[-/]/);
-        if (parts.length >= 3) {
-          // dd, mm, yyyy
-          txDate = new Date(parseInt(parts[2]), parseInt(parts[1]) - 1, parseInt(parts[0]));
-          if (isNaN(txDate.getTime())) txDate = new Date(m.date); // fallback
-        } else {
-          txDate = new Date(m.date); // fallback
+        // Parse date properly. Natively parse YYYY-MM-DD first (BRI format)
+        let txDate = new Date(m.date);
+        if (isNaN(txDate.getTime())) {
+          // fallback for DD/MM/YYYY formats if any
+          const parts = m.date.split(/[-/]/);
+          if (parts.length >= 3) {
+            txDate = new Date(parseInt(parts[2]), parseInt(parts[1]) - 1, parseInt(parts[0]));
+          }
         }
 
         // Calculate end date (assuming 1 month duration)
@@ -251,7 +256,7 @@ export function MutationUploadDialog({ activeTenants }: { activeTenants: Tenant[
                   <tr>
                     <th className="p-3 w-10">#</th>
                     <th className="p-3">Tanggal</th>
-                    <th className="p-3 max-w-[200px]">Keterangan Bank</th>
+                    <th className="p-3 min-w-[300px]">Keterangan Bank</th>
                     <th className="p-3">Nominal Masuk</th>
                     <th className="p-3">Tebakan Penghuni (AI)</th>
                   </tr>
@@ -267,22 +272,28 @@ export function MutationUploadDialog({ activeTenants }: { activeTenants: Tenant[
                         />
                       </td>
                       <td className="p-3 font-mono text-xs">{m.date}</td>
-                      <td className="p-3 truncate max-w-[200px]" title={m.description}>{m.description}</td>
+                      <td className="p-3 min-w-[300px] whitespace-normal break-words text-xs leading-relaxed" title={m.description}>{m.description}</td>
                       <td className="p-3 font-semibold text-emerald-600">
                         Rp {m.amount.toLocaleString("id-ID")}
                       </td>
                       <td className="p-3">
-                        {m.matchedTenant ? (
-                          <div className="flex items-center gap-2 text-emerald-700 font-medium">
-                            <Check className="h-4 w-4" />
-                            {m.matchedTenant.name} ({m.matchedTenant.building?.code})
-                          </div>
-                        ) : (
-                          <div className="flex items-center gap-2 text-slate-400">
-                            <X className="h-4 w-4" />
-                            <span className="italic">Tidak Cocok</span>
-                          </div>
-                        )}
+                        <Select 
+                          value={m.matchedTenant?.id || ""} 
+                          onValueChange={(val) => setManualTenant(m.id, val)}
+                        >
+                          <SelectTrigger className={`w-[220px] h-9 text-xs ${m.matchedTenant ? 'border-emerald-200 text-emerald-700 bg-emerald-50' : 'text-slate-500'}`}>
+                            <SelectValue placeholder="Pilih manual penghuni...">
+                              {m.matchedTenant ? `${m.matchedTenant.name} (${m.matchedTenant.building?.code})` : "Pilih manual penghuni..."}
+                            </SelectValue>
+                          </SelectTrigger>
+                          <SelectContent>
+                            {activeTenants.map(t => (
+                              <SelectItem key={t.id} value={t.id} className="text-xs">
+                                {t.name} ({t.building?.code})
+                              </SelectItem>
+                            ))}
+                          </SelectContent>
+                        </Select>
                       </td>
                     </tr>
                   ))}
