@@ -64,25 +64,44 @@ export default async function MonitoringPage() {
         if (exitDate < monthStart) return "KOSONG"
       }
 
-      // Find any payment whose transfer_date falls within this month
-      const paymentThisMonth = tenant.payments.find(p => {
-        const pd = new Date(p.transfer_date)
-        pd.setHours(0, 0, 0, 0)
-        return pd >= monthStart && pd <= monthEnd
-      })
-
-      if (paymentThisMonth) {
-        // Check if transfer was within 7 days of the 1st (grace period)
-        const transferDay = new Date(paymentThisMonth.transfer_date).getDate()
-        return transferDay <= 7 ? "TEPAT" : "TELAT"
+      // Calculate the specific due date for this month based on entryDay
+      const entryDay = entryDate.getDate();
+      const dueDateThisMonth = new Date(year, month, entryDay);
+      // Clamp day if rolled over (e.g. 31st on a 30-day month)
+      if (dueDateThisMonth.getMonth() !== month) {
+        dueDateThisMonth.setDate(0);
       }
+      dueDateThisMonth.setHours(0, 0, 0, 0);
 
-      // No payment found for this month
-      // If the month is in the future → BELUM BAYAR (expected)
-      if (monthStart > today) return "—"
+      // Get latest payment's rent_end_date
+      const latestPayment = tenant.payments.length > 0
+        ? tenant.payments[tenant.payments.length - 1]
+        : null;
+      
+      const rentEndDate = latestPayment ? new Date(latestPayment.rent_end_date) : new Date(entryDate);
+      rentEndDate.setHours(0, 0, 0, 0);
 
-      // If current month → BELUM BAYAR
-      return "BELUM BAYAR"
+      const isPaid = rentEndDate > dueDateThisMonth;
+
+      if (isPaid) {
+        // Find which payment covered this cycle
+        const coveringPayment = tenant.payments.find(p => new Date(p.rent_end_date) > dueDateThisMonth);
+        if (coveringPayment) {
+          const transferDate = new Date(coveringPayment.transfer_date);
+          transferDate.setHours(0, 0, 0, 0);
+          
+          // Grace period is due date + 7 days
+          const gracePeriod = new Date(dueDateThisMonth);
+          gracePeriod.setDate(gracePeriod.getDate() + 7);
+          
+          return transferDate <= gracePeriod ? "TEPAT" : "TELAT";
+        }
+        return "TEPAT";
+      } else {
+        // Not paid
+        if (today < dueDateThisMonth) return "—";
+        return "BELUM BAYAR";
+      }
     })
 
     // Get latest payment for akhir sewa
@@ -93,16 +112,29 @@ export default async function MonitoringPage() {
     // Status bulan ini (current month)
     const currentMonth = today.getMonth()
     const currentYear = today.getFullYear()
-    const currentMonthStart = new Date(currentYear, currentMonth, 1)
-    const currentMonthEnd = new Date(currentYear, currentMonth + 1, 0)
-    const paymentThisMonth = tenant.payments.find(p => {
-      const pd = new Date(p.transfer_date)
-      return pd >= currentMonthStart && pd <= currentMonthEnd
-    })
-    let currentStatus = "BELUM BAYAR"
-    if (paymentThisMonth) {
-      const day = new Date(paymentThisMonth.transfer_date).getDate()
-      currentStatus = day <= 7 ? "TEPAT" : "TELAT"
+    
+    const entryDay = new Date(tenant.entry_date).getDate();
+    const currentDueDate = new Date(currentYear, currentMonth, entryDay);
+    if (currentDueDate.getMonth() !== currentMonth) currentDueDate.setDate(0);
+    currentDueDate.setHours(0, 0, 0, 0);
+
+    const rentEndDate = latestPayment ? new Date(latestPayment.rent_end_date) : new Date(tenant.entry_date);
+    rentEndDate.setHours(0, 0, 0, 0);
+
+    let currentStatus = "BELUM BAYAR";
+    if (rentEndDate > currentDueDate) {
+       const coveringPayment = tenant.payments.find(p => new Date(p.rent_end_date) > currentDueDate);
+       if (coveringPayment) {
+         const transferDate = new Date(coveringPayment.transfer_date);
+         transferDate.setHours(0, 0, 0, 0);
+         const gracePeriod = new Date(currentDueDate);
+         gracePeriod.setDate(gracePeriod.getDate() + 7);
+         currentStatus = transferDate <= gracePeriod ? "TEPAT" : "TELAT";
+       } else {
+         currentStatus = "TEPAT";
+       }
+    } else {
+       if (today < currentDueDate) currentStatus = "—";
     }
 
     return {

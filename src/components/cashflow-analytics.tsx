@@ -24,12 +24,12 @@ export type CurrentMonthTarget = {
   unachievedReasons: UnachievedReason[]
 }
 
-export function CashflowAnalytics({ 
-  monthlyData, 
-  currentTarget 
-}: { 
-  monthlyData: MonthlyCashflowData[], 
-  currentTarget: CurrentMonthTarget 
+export function CashflowAnalytics({
+  monthlyData,
+  currentTarget
+}: {
+  monthlyData: MonthlyCashflowData[],
+  currentTarget: CurrentMonthTarget
 }) {
   const isTargetAchieved = currentTarget.actualIncome >= currentTarget.potentialIncome
 
@@ -85,7 +85,7 @@ export function CashflowAnalytics({
                       </p>
                     </div>
                   </div>
-                  
+
                   {currentTarget.unachievedReasons.length > 0 && (
                     <div className="mt-3 pt-3 border-t border-amber-200/50">
                       <p className="text-xs font-semibold text-amber-800 mb-2 flex items-center gap-1.5">
@@ -128,20 +128,20 @@ export function CashflowAnalytics({
               <ResponsiveContainer width="100%" height="100%">
                 <BarChart data={monthlyData} margin={{ top: 10, right: 10, left: 0, bottom: 0 }}>
                   <CartesianGrid strokeDasharray="3 3" vertical={false} stroke="#e2e8f0" />
-                  <XAxis 
-                    dataKey="month" 
+                  <XAxis
+                    dataKey="month"
                     axisLine={false}
                     tickLine={false}
                     tick={{ fontSize: 12, fill: '#64748b' }}
                     dy={10}
                   />
-                  <YAxis 
+                  <YAxis
                     axisLine={false}
                     tickLine={false}
                     tick={{ fontSize: 12, fill: '#64748b' }}
                     tickFormatter={(value) => `Rp${(value / 1000000).toFixed(0)}M`}
                   />
-                  <Tooltip 
+                  <Tooltip
                     cursor={{ fill: '#f1f5f9', opacity: 0.5 }}
                     content={({ active, payload, label }) => {
                       if (active && payload && payload.length) {
@@ -178,9 +178,9 @@ export function CashflowAnalytics({
                       return null;
                     }}
                   />
-                  <Legend 
-                    verticalAlign="top" 
-                    height={36} 
+                  <Legend
+                    verticalAlign="top"
+                    height={36}
                     iconType="circle"
                     formatter={(value) => <span className="text-xs text-slate-600 font-medium ml-1">{value}</span>}
                   />

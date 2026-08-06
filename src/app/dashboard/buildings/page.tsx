@@ -74,9 +74,15 @@ export default async function BuildingsPage(props: { searchParams?: Promise<{ qu
                     <TableRow key={building.id} className="hover:bg-slate-50/50 transition-colors">
                       <TableCell className="font-medium text-slate-900">{building.code}</TableCell>
                       <TableCell>
-                        <Badge variant={building.type === "Kontrakan" ? "default" : "secondary"} className="rounded-md">
-                          {building.type}
-                        </Badge>
+                        {building.type === "Kontrakan" ? (
+                          <Badge variant="default" className="rounded-md">
+                            {building.type}
+                          </Badge>
+                        ) : (
+                          <Badge className="bg-blue-50 text-blue-700 border-blue-200 hover:bg-blue-100 rounded-md shadow-none">
+                            {building.type}
+                          </Badge>
+                        )}
                       </TableCell>
                       <TableCell className="font-medium">Rp {building.rent_price.toLocaleString("id-ID")}</TableCell>
                       <TableCell className="text-slate-500">{building.rent_period}</TableCell>

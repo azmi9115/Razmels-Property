@@ -36,7 +36,19 @@ export async function createPayment(formData: FormData) {
     }
     
     const end_date = new Date(baseDate)
-    end_date.setMonth(end_date.getMonth() + rent_duration_months)
+    const targetMonth = end_date.getMonth() + rent_duration_months;
+    const intendedMonth = targetMonth % 12;
+    
+    end_date.setMonth(targetMonth);
+    
+    // Kembalikan ke tanggal asli masuk (misal masuk tgl 31)
+    const originalEntryDay = new Date(tenant.entry_date).getDate();
+    end_date.setDate(originalEntryDay);
+    
+    // Jika bulan lompat karena tanggal tidak ada di bulan tujuan (misal 31 Feb -> 3 Mar)
+    if (end_date.getMonth() !== (intendedMonth < 0 ? 12 + intendedMonth : intendedMonth)) {
+      end_date.setDate(0); // Mentok ke hari terakhir bulan tujuan (misal 28/29 Feb)
+    }
 
     // 1. Simpan Pembayaran
     await prisma.payment.create({

@@ -1,8 +1,10 @@
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card"
-import { Building2, Users, Wallet, TrendingUp, TrendingDown, ArrowRight, AlertCircle, ArrowUpRight, ArrowDownRight, Building, FileSpreadsheet } from "lucide-react"
+import { Building2, Users, Wallet, TrendingUp, TrendingDown, ArrowRight, AlertCircle, ArrowUpRight, ArrowDownRight, Building, FileSpreadsheet, Landmark, PieChart, CalendarOff } from "lucide-react"
 import prisma from "@/lib/prisma"
 import { CashflowChart } from "@/components/cashflow-chart"
 import { CategoryPieChart } from "@/components/category-pie-chart"
+
+export const dynamic = "force-dynamic";
 
 // Next.js App Router mengizinkan kita melakukan await langsung di komponen
 export default async function DashboardPage() {
@@ -10,20 +12,40 @@ export default async function DashboardPage() {
   const activeTenants = await prisma.tenant.count({
     where: { status: "Active" }
   });
-  
-  const totalBuildings = await prisma.building.count();
+
+  const allBuildings = await prisma.building.findMany();
+  const totalBuildings = allBuildings.length;
   const occupancyRate = totalBuildings > 0 ? (activeTenants / totalBuildings) * 100 : 0;
-  
+  const totalPotensiKotor = allBuildings.reduce((acc, curr) => acc + curr.rent_price, 0);
+
   const cashflows = await prisma.cashflow.findMany();
-  
+
   const income = cashflows.filter(c => c.type === "Pemasukan").reduce((acc, curr) => acc + curr.amount, 0)
   const expense = cashflows.filter(c => c.type === "Pengeluaran").reduce((acc, curr) => acc + curr.amount, 0)
+  const saldoAkhir = income - expense;
+  const profitMargin = income > 0 ? (saldoAkhir / income) * 100 : 0;
+
+  const currentMonth = new Date().getMonth();
+  const currentYear = new Date().getFullYear();
+  const lastMonth = currentMonth === 0 ? 11 : currentMonth - 1;
+  const lastMonthYear = currentMonth === 0 ? currentYear - 1 : currentYear;
+
+  const incomeThisMonth = cashflows
+    .filter(c => c.type === "Pemasukan" && new Date(c.transaction_date).getMonth() === currentMonth && new Date(c.transaction_date).getFullYear() === currentYear)
+    .reduce((acc, curr) => acc + curr.amount, 0);
+
+  const incomeLastMonth = cashflows
+    .filter(c => c.type === "Pemasukan" && new Date(c.transaction_date).getMonth() === lastMonth && new Date(c.transaction_date).getFullYear() === lastMonthYear)
+    .reduce((acc, curr) => acc + curr.amount, 0);
+
+  const incomeDiff = incomeThisMonth - incomeLastMonth;
+
 
   // Hitung data untuk grafik (6 bulan terakhir)
   const sixMonthsAgo = new Date()
   sixMonthsAgo.setMonth(sixMonthsAgo.getMonth() - 5)
   sixMonthsAgo.setDate(1)
-  
+
   const allCashflows = await prisma.cashflow.findMany({
     where: { transaction_date: { gte: sixMonthsAgo } },
     orderBy: { transaction_date: "asc" }
@@ -32,20 +54,27 @@ export default async function DashboardPage() {
   const monthlyDataMap = new Map<string, { month: string, Pemasukan: number, Pengeluaran: number }>()
   const incomeCategoryMap = new Map<string, number>()
   const expenseCategoryMap = new Map<string, number>()
-  
+
   // Inisialisasi 6 bulan terakhir
   for (let i = 5; i >= 0; i--) {
     const d = new Date()
     d.setMonth(d.getMonth() - i)
-    const monthStr = d.toLocaleDateString("id-ID", { month: "short", year: "2-digit" })
-    monthlyDataMap.set(monthStr, { month: monthStr, Pemasukan: 0, Pengeluaran: 0 })
+    const m = d.getMonth()
+    const y = d.getFullYear()
+    const monthNames = ["Jan", "Feb", "Mar", "Apr", "Mei", "Jun", "Jul", "Ags", "Sep", "Okt", "Nov", "Des"];
+    const monthStr = `${monthNames[m]} ${y.toString().slice(-2)}`;
+    monthlyDataMap.set(`${y}-${m}`, { month: monthStr, Pemasukan: 0, Pengeluaran: 0 })
   }
 
   allCashflows.forEach(cf => {
     // Line chart data
-    const monthStr = new Date(cf.transaction_date).toLocaleDateString("id-ID", { month: "short", year: "2-digit" })
-    if (monthlyDataMap.has(monthStr)) {
-      const data = monthlyDataMap.get(monthStr)!
+    const d = new Date(cf.transaction_date);
+    const m = d.getMonth();
+    const y = d.getFullYear();
+    const key = `${y}-${m}`;
+
+    if (monthlyDataMap.has(key)) {
+      const data = monthlyDataMap.get(key)!
       if (cf.type === "Pemasukan") data.Pemasukan += cf.amount
       else data.Pengeluaran += cf.amount
     }
@@ -59,7 +88,7 @@ export default async function DashboardPage() {
   })
 
   const chartData = Array.from(monthlyDataMap.values())
-  
+
   // Data for Chart 1: Income vs Expense (All Time)
   const incomeVsExpensePieData = [
     { name: "Total Pemasukan", value: income },
@@ -69,7 +98,7 @@ export default async function DashboardPage() {
   // Data for Chart 2: Expense by Category (All Time)
   const allTimeExpenseCategoryMap = new Map<string, number>()
   const allTimeIncomeCategoryMap = new Map<string, number>()
-  
+
   cashflows.forEach(cf => {
     if (cf.type === "Pengeluaran") {
       allTimeExpenseCategoryMap.set(cf.category, (allTimeExpenseCategoryMap.get(cf.category) || 0) + cf.amount)
@@ -77,11 +106,11 @@ export default async function DashboardPage() {
       allTimeIncomeCategoryMap.set(cf.category, (allTimeIncomeCategoryMap.get(cf.category) || 0) + cf.amount)
     }
   })
-  
+
   const allTimeExpensePieData = Array.from(allTimeExpenseCategoryMap.entries())
     .map(([name, value]) => ({ name, value }))
     .sort((a, b) => b.value - a.value)
-    
+
   const allTimeIncomePieData = Array.from(allTimeIncomeCategoryMap.entries())
     .map(([name, value]) => ({ name, value }))
     .sort((a, b) => b.value - a.value)
@@ -91,7 +120,7 @@ export default async function DashboardPage() {
   const wakafAmount = cashflows.filter(c => c.type === "Pengeluaran" && c.category === "Wakaf").reduce((acc, curr) => acc + curr.amount, 0)
   const sedekahAmount = cashflows.filter(c => c.type === "Pengeluaran" && c.category === "Sedekah").reduce((acc, curr) => acc + curr.amount, 0)
   const zwsTotal = zakatAmount + wakafAmount + sedekahAmount;
-    
+
   const zwsVsIncomePieData = [
     { name: "Pemasukan Bersih", value: income > zwsTotal ? income - zwsTotal : 0 },
     { name: "Zakat, Wakaf & Sedekah", value: zwsTotal }
@@ -118,40 +147,42 @@ export default async function DashboardPage() {
   const today = new Date();
   today.setHours(0, 0, 0, 0);
 
-  let totalTunggakanNilai = 0;
+  let potensiPendapatan = 0;
   let tenantMenunggak = 0;
+  let totalTunggakanRp = 0;
 
   const upcomingDueDates = tenantsWithPayments.map(tenant => {
-    const dueDate = tenant.payments && tenant.payments.length > 0 
+    potensiPendapatan += tenant.building?.rent_price || 0;
+
+    const dueDate = tenant.payments && tenant.payments.length > 0
       ? new Date(tenant.payments[0].rent_end_date)
       : new Date(tenant.entry_date);
-    
+
     dueDate.setHours(0, 0, 0, 0);
     const diffTime = dueDate.getTime() - today.getTime();
     const diffDays = Math.ceil(diffTime / (1000 * 60 * 60 * 24));
-    
-    const isLate = diffDays < 0;
-    
-    if (isLate) {
+
+    if (diffDays < 0) {
       tenantMenunggak++;
-      const monthsLate = Math.ceil(Math.abs(diffDays) / 30) || 1;
-      totalTunggakanNilai += (tenant.building?.rent_price || 0) * monthsLate;
+      totalTunggakanRp += tenant.building?.rent_price || 0;
     }
-    
+
     return {
       name: tenant.name,
       room: tenant.building?.code || "N/A",
       dueDate: dueDate,
       diffDays: diffDays,
-      isLate: isLate,
+      isLate: diffDays < 0,
       isDueSoon: diffDays >= 0 && diffDays <= 7
     };
   })
-  .filter(item => item.isLate || item.diffDays <= 30) // Only show late or due within 30 days
-  .sort((a, b) => a.diffDays - b.diffDays)
-  .slice(0, 5); // Take top 5
-  
-  const finalBalance = income - expense;
+    .filter(item => item.isLate || item.diffDays <= 30) // Only show late or due within 30 days
+    .sort((a, b) => a.diffDays - b.diffDays)
+    .slice(0, 5); // Take top 5
+
+  const kamarKosong = totalBuildings - activeTenants;
+  const potensiKosongRp = totalPotensiKotor - potensiPendapatan;
+  const proyeksiSaldo = saldoAkhir + totalTunggakanRp;
 
   return (
     <div className="space-y-8 animate-in fade-in slide-in-from-bottom-4 duration-700 ease-out">
@@ -165,31 +196,50 @@ export default async function DashboardPage() {
             Ringkasan performa properti dan keuangan bulan ini.
           </p>
         </div>
-        <a 
-          href="/api/export" 
-          target="_blank" 
+        <a
+          href="/api/export"
+          target="_blank"
           className="flex items-center gap-2 bg-emerald-600 text-white px-4 py-2.5 rounded-lg shadow-sm hover:bg-emerald-700 transition-all font-medium"
         >
-          <FileSpreadsheet className="h-4 w-4" /> 
+          <FileSpreadsheet className="h-4 w-4" />
           Export ke Excel
         </a>
       </div>
 
       <div className="grid gap-6 md:grid-cols-2 lg:grid-cols-5">
-        {/* Pemasukan Card */}
+        {/* Total Pendapatan Card */}
         <Card className="border-slate-200/60 shadow-sm bg-white/70 backdrop-blur-xl transition-all hover:shadow-md hover:-translate-y-1">
           <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
             <CardTitle className="text-sm font-semibold text-slate-500 uppercase tracking-wider">Total Pendapatan</CardTitle>
-            <div className="h-10 w-10 bg-green-100 rounded-xl flex items-center justify-center text-green-600 shadow-inner">
-              <Wallet className="h-5 w-5" />
+            <div className="h-10 w-10 bg-emerald-100 rounded-xl flex items-center justify-center text-emerald-600 shadow-inner">
+              <Landmark className="h-5 w-5" />
             </div>
           </CardHeader>
           <CardContent>
             <div className="text-2xl font-bold text-slate-800">
               Rp {income.toLocaleString("id-ID")}
             </div>
-            <p className="text-xs font-medium text-green-600 mt-2 flex items-center gap-1 bg-green-50 w-max px-2 py-1 rounded-md">
-              <ArrowUpRight className="h-3 w-3" /> +20.1% dari bulan lalu
+            <p className="text-xs font-medium text-slate-500 mt-2">
+              Sejak awal sistem digunakan
+            </p>
+          </CardContent>
+        </Card>
+
+        {/* Pendapatan Bulan Ini Card */}
+        <Card className="border-slate-200/60 shadow-sm bg-white/70 backdrop-blur-xl transition-all hover:shadow-md hover:-translate-y-1">
+          <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
+            <CardTitle className="text-sm font-semibold text-slate-500 uppercase tracking-wider">Pendapatan Bulan Ini</CardTitle>
+            <div className="h-10 w-10 bg-green-100 rounded-xl flex items-center justify-center text-green-600 shadow-inner">
+              <Wallet className="h-5 w-5" />
+            </div>
+          </CardHeader>
+          <CardContent>
+            <div className="text-2xl font-bold text-slate-800">
+              Rp {incomeThisMonth.toLocaleString("id-ID")}
+            </div>
+            <p className={`text-xs font-medium mt-2 flex items-center gap-1 w-max px-2 py-1 rounded-md ${incomeDiff >= 0 ? 'text-green-600 bg-green-50' : 'text-red-600 bg-red-50'}`}>
+              {incomeDiff >= 0 ? <ArrowUpRight className="h-3 w-3" /> : <ArrowDownRight className="h-3 w-3" />}
+              {incomeDiff >= 0 ? '+' : '-'} Rp {Math.abs(incomeDiff).toLocaleString("id-ID")} vs bln lalu
             </p>
           </CardContent>
         </Card>
@@ -250,25 +300,122 @@ export default async function DashboardPage() {
             </p>
           </CardContent>
         </Card>
-        
-        {/* Tunggakan Card */}
-        <Card className={`border-slate-200/60 shadow-sm backdrop-blur-xl transition-all hover:shadow-md hover:-translate-y-1 ${tenantMenunggak > 0 ? 'bg-orange-50/50 border-orange-200/60' : 'bg-white/70'}`}>
+      </div>
+
+      {/* Baris Kedua: Parameter Bisnis (New) */}
+      <div className="grid gap-6 md:grid-cols-2 lg:grid-cols-4">
+        {/* Saldo Akhir Card */}
+        <Card className="border-slate-200/60 shadow-sm bg-white/70 backdrop-blur-xl transition-all hover:shadow-md hover:-translate-y-1">
           <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-            <CardTitle className={`text-sm font-semibold uppercase tracking-wider ${tenantMenunggak > 0 ? 'text-orange-600' : 'text-slate-500'}`}>Tunggakan</CardTitle>
-            <div className={`h-10 w-10 rounded-xl flex items-center justify-center shadow-inner ${tenantMenunggak > 0 ? 'bg-orange-100 text-orange-600' : 'bg-slate-100 text-slate-600'}`}>
-              <AlertCircle className="h-5 w-5" />
+            <CardTitle className="text-sm font-semibold text-slate-500 uppercase tracking-wider">Saldo Akhir</CardTitle>
+            <div className="h-10 w-10 bg-emerald-100 rounded-xl flex items-center justify-center text-emerald-600 shadow-inner">
+              <Landmark className="h-5 w-5" />
             </div>
           </CardHeader>
           <CardContent>
-            <div className={`text-2xl font-bold ${tenantMenunggak > 0 ? 'text-orange-700' : 'text-slate-800'}`}>
-              Rp {totalTunggakanNilai.toLocaleString("id-ID")}
+            <div className="text-2xl font-bold text-slate-800">
+              Rp {saldoAkhir.toLocaleString("id-ID")}
             </div>
-            <p className={`text-[11px] font-medium mt-2 leading-tight ${tenantMenunggak > 0 ? 'text-orange-600' : 'text-muted-foreground'}`}>
-              Dari {tenantMenunggak} orang. Jika lunas, saldo: Rp {(finalBalance + totalTunggakanNilai).toLocaleString("id-ID")}
+            <p className="text-xs font-medium text-slate-500 mt-2">
+              Sisa Kas Bersih
+            </p>
+          </CardContent>
+        </Card>
+
+        {/* Profit Margin Card */}
+        <Card className="border-slate-200/60 shadow-sm bg-white/70 backdrop-blur-xl transition-all hover:shadow-md hover:-translate-y-1">
+          <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
+            <CardTitle className="text-sm font-semibold text-slate-500 uppercase tracking-wider">Margin Laba</CardTitle>
+            <div className="h-10 w-10 bg-indigo-100 rounded-xl flex items-center justify-center text-indigo-600 shadow-inner">
+              <PieChart className="h-5 w-5" />
+            </div>
+          </CardHeader>
+          <CardContent>
+            <div className="text-2xl font-bold text-slate-800">
+              {profitMargin.toFixed(1)}%
+            </div>
+            <p className="text-xs font-medium text-slate-500 mt-2">
+              Persentase Keuntungan
+            </p>
+          </CardContent>
+        </Card>
+
+        {/* Potensi Pendapatan Card */}
+        <Card className="border-slate-200/60 shadow-sm bg-white/70 backdrop-blur-xl transition-all hover:shadow-md hover:-translate-y-1">
+          <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
+            <CardTitle className="text-sm font-semibold text-slate-500 uppercase tracking-wider">Potensi Bulanan</CardTitle>
+            <div className="h-10 w-10 bg-blue-100 rounded-xl flex items-center justify-center text-blue-600 shadow-inner">
+              <TrendingUp className="h-5 w-5" />
+            </div>
+          </CardHeader>
+          <CardContent>
+            <div className="text-2xl font-bold text-slate-800">
+              Rp {potensiPendapatan.toLocaleString("id-ID")}
+            </div>
+            <p className="text-xs font-medium text-slate-500 mt-2">
+              Dari {activeTenants} kamar yang aktif
+            </p>
+          </CardContent>
+        </Card>
+
+        {/* Tunggakan Card */}
+        <Card className={`border-slate-200/60 shadow-sm bg-white/70 backdrop-blur-xl transition-all hover:shadow-md hover:-translate-y-1 ${tenantMenunggak > 0 ? 'border-red-200 bg-red-50/30' : ''}`}>
+          <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
+            <CardTitle className="text-sm font-semibold text-slate-500 uppercase tracking-wider">Tunggakan</CardTitle>
+            <div className={`h-10 w-10 rounded-xl flex items-center justify-center shadow-inner ${tenantMenunggak > 0 ? 'bg-red-100 text-red-600' : 'bg-slate-100 text-slate-600'}`}>
+              <CalendarOff className="h-5 w-5" />
+            </div>
+          </CardHeader>
+          <CardContent>
+            <div className={`text-2xl font-bold ${tenantMenunggak > 0 ? 'text-red-700' : 'text-slate-800'}`}>
+              {tenantMenunggak} <span className="text-sm font-medium">Penghuni</span>
+            </div>
+            <p className={`text-xs font-medium mt-2 ${tenantMenunggak > 0 ? 'text-red-600' : 'text-slate-500'}`}>
+              Lewat batas jatuh tempo
             </p>
           </CardContent>
         </Card>
       </div>
+
+      {/* Analisis Cerdas Section */}
+      <Card className="bg-gradient-to-br from-indigo-50/50 via-white to-blue-50/30 rounded-2xl border border-indigo-100 shadow-sm hover:shadow-md transition-shadow duration-300 overflow-hidden relative">
+        <div className="absolute top-0 right-0 w-64 h-64 bg-blue-100/40 rounded-full blur-3xl -mr-20 -mt-20 pointer-events-none"></div>
+        <CardHeader className="border-b border-indigo-50/50 pb-5 px-6 pt-6">
+          <CardTitle className="text-xl font-extrabold text-indigo-950 flex items-center gap-2">
+            <span className="text-2xl">💡</span> Analisis Keuangan Cerdas
+          </CardTitle>
+          <CardDescription className="text-sm font-medium text-indigo-700/70 mt-1">
+            Ringkasan performa riil dan proyeksi pendapatan properti Anda.
+          </CardDescription>
+        </CardHeader>
+        <CardContent className="pt-6 px-6 pb-6">
+          <div className="grid gap-6 md:grid-cols-3">
+            <div className="space-y-2">
+              <h4 className="text-xs font-bold text-indigo-800 uppercase tracking-wider">Performa vs Potensi</h4>
+              <p className="text-sm font-medium text-slate-700 leading-relaxed">
+                Pemasukan riil bulan ini (<strong className="text-slate-900">Rp {Math.round(incomeThisMonth).toLocaleString("id-ID")}</strong>)
+                mencapai <strong className="text-indigo-600">{totalPotensiKotor > 0 ? Math.round((incomeThisMonth / totalPotensiKotor) * 100) : 0}%</strong> dari total potensi kotor
+                (Rp {Math.round(totalPotensiKotor).toLocaleString("id-ID")}).
+              </p>
+            </div>
+            <div className="space-y-2 md:border-l border-indigo-100 md:pl-6">
+              <h4 className="text-xs font-bold text-red-700 uppercase tracking-wider">Alasan Kehilangan Potensi</h4>
+              <p className="text-sm font-medium text-slate-700 leading-relaxed">
+                Terdapat <strong className="text-slate-900">{kamarKosong} kamar kosong</strong> senilai Rp {Math.round(potensiKosongRp).toLocaleString("id-ID")},
+                serta <strong className="text-red-600">{tenantMenunggak} penghuni menunggak</strong> dengan total belum tertagih <strong className="text-red-600">Rp {Math.round(totalTunggakanRp).toLocaleString("id-ID")}</strong>.
+                <br/><br/>
+                Jika penunggak melunasi, Saldo Akhir Anda menjadi <strong className="text-emerald-600 font-bold">Rp {Math.round(proyeksiSaldo).toLocaleString("id-ID")}</strong>.
+              </p>
+            </div>
+            <div className="space-y-2 md:border-l border-indigo-100 md:pl-6">
+              <h4 className="text-xs font-bold text-emerald-700 uppercase tracking-wider">Proyeksi Saldo Maksimal</h4>
+              <p className="text-sm font-medium text-slate-700 leading-relaxed">
+                Jika seluruh kamar penuh dan seluruh tagihan dibayar lunas (tanpa tunggakan), maka potensi maksimal Saldo Akhir Anda adalah <strong className="text-emerald-600 font-extrabold text-[15px]">Rp {Math.round(saldoAkhir + (potensiPendapatan - incomeThisMonth)).toLocaleString("id-ID")}</strong>.
+              </p>
+            </div>
+          </div>
+        </CardContent>
+      </Card>
 
       <div className="grid gap-6 md:grid-cols-2 lg:grid-cols-7">
         {/* Main Chart Section */}
@@ -291,28 +438,28 @@ export default async function DashboardPage() {
           </CardHeader>
           <CardContent>
             <div className="space-y-4">
-               {upcomingDueDates.length > 0 ? (
-                 upcomingDueDates.map((item, index) => (
-                   <div key={index} className={`flex items-center gap-4 rounded-xl p-4 border shadow-sm transition-all hover:shadow-md cursor-pointer ${item.isLate ? 'bg-gradient-to-r from-red-50 to-white border-red-100 hover:border-red-200' : item.isDueSoon ? 'bg-gradient-to-r from-orange-50 to-white border-orange-100 hover:border-orange-200' : 'bg-white border-slate-100 hover:border-slate-200'}`}>
-                      <div className={`flex h-12 w-12 shrink-0 items-center justify-center rounded-full ${item.isLate ? 'bg-red-100 text-red-600' : item.isDueSoon ? 'bg-orange-100 text-orange-600' : 'bg-slate-100 text-slate-500'}`}>
-                        <AlertCircle className="h-6 w-6" />
+              {upcomingDueDates.length > 0 ? (
+                upcomingDueDates.map((item, index) => (
+                  <div key={index} className={`flex items-center gap-4 rounded-xl p-4 border shadow-sm transition-all hover:shadow-md cursor-pointer ${item.isLate ? 'bg-gradient-to-r from-red-50 to-white border-red-100 hover:border-red-200' : item.isDueSoon ? 'bg-gradient-to-r from-orange-50 to-white border-orange-100 hover:border-orange-200' : 'bg-white border-slate-100 hover:border-slate-200'}`}>
+                    <div className={`flex h-12 w-12 shrink-0 items-center justify-center rounded-full ${item.isLate ? 'bg-red-100 text-red-600' : item.isDueSoon ? 'bg-orange-100 text-orange-600' : 'bg-slate-100 text-slate-500'}`}>
+                      <AlertCircle className="h-6 w-6" />
+                    </div>
+                    <div className="flex-1 space-y-1">
+                      <p className="text-sm font-bold text-slate-800">{item.name}</p>
+                      <p className="text-xs font-medium text-slate-500">Kamar {item.room}</p>
+                    </div>
+                    <div className="text-right">
+                      <div className={`text-sm font-bold px-3 py-1 rounded-full ${item.isLate ? 'text-red-600 bg-red-100' : item.isDueSoon ? 'text-orange-600 bg-orange-100' : 'text-slate-500 bg-slate-100'}`}>
+                        {item.isLate ? `Terlewat ${Math.abs(item.diffDays)} Hari` : item.diffDays === 0 ? "Hari Ini" : `Sisa ${item.diffDays} Hari`}
                       </div>
-                      <div className="flex-1 space-y-1">
-                        <p className="text-sm font-bold text-slate-800">{item.name}</p>
-                        <p className="text-xs font-medium text-slate-500">Kamar {item.room}</p>
-                      </div>
-                      <div className="text-right">
-                        <div className={`text-sm font-bold px-3 py-1 rounded-full ${item.isLate ? 'text-red-600 bg-red-100' : item.isDueSoon ? 'text-orange-600 bg-orange-100' : 'text-slate-500 bg-slate-100'}`}>
-                          {item.isLate ? `Terlewat ${Math.abs(item.diffDays)} Hari` : item.diffDays === 0 ? "Hari Ini" : `Sisa ${item.diffDays} Hari`}
-                        </div>
-                      </div>
-                   </div>
-                 ))
-               ) : (
-                 <div className="text-center text-slate-500 py-6 text-sm">
-                   Tidak ada penghuni yang mendekati jatuh tempo.
-                 </div>
-               )}
+                    </div>
+                  </div>
+                ))
+              ) : (
+                <div className="text-center text-slate-500 py-6 text-sm">
+                  Tidak ada penghuni yang mendekati jatuh tempo.
+                </div>
+              )}
             </div>
           </CardContent>
         </Card>
@@ -328,7 +475,7 @@ export default async function DashboardPage() {
             <CategoryPieChart data={incomeVsExpensePieData} />
           </CardContent>
         </Card>
-        
+
         <Card className="border-slate-200/60 shadow-sm bg-white/70 backdrop-blur-xl">
           <CardHeader>
             <CardTitle className="text-slate-800 text-lg">Rincian Pemasukan</CardTitle>
@@ -338,7 +485,7 @@ export default async function DashboardPage() {
             <CategoryPieChart data={allTimeIncomePieData} />
           </CardContent>
         </Card>
-        
+
         <Card className="border-slate-200/60 shadow-sm bg-white/70 backdrop-blur-xl">
           <CardHeader>
             <CardTitle className="text-slate-800 text-lg">Rincian Pengeluaran</CardTitle>
