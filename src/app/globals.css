@@ -12,7 +12,9 @@
   --font-geist-mono: "Geist Mono", monospace;
   --font-plus-jakarta-sans: "Plus Jakarta Sans", sans-serif;
   --font-inter: "Inter", sans-serif;
+  --font-lora: "Lora", serif;
   --font-sans: var(--font-plus-jakarta-sans);
+  --font-serif: var(--font-lora);
   --font-mono: var(--font-geist-mono);
   --font-heading: var(--font-inter);
   --color-sidebar-ring: var(--sidebar-ring);
@@ -143,12 +145,12 @@
   --font-body-lg: var(--font-inter);
   --font-body-md: var(--font-inter);
   --font-label-sm: var(--font-inter);
-  
+
   --font-headline-xl: var(--font-plus-jakarta-sans);
   --font-headline-lg: var(--font-plus-jakarta-sans);
   --font-headline-md: var(--font-plus-jakarta-sans);
   --font-display-xl: var(--font-plus-jakarta-sans);
-  
+
   /* Layout */
   --spacing-margin-desktop: 80px;
   --spacing-gutter: 24px;
@@ -233,7 +235,7 @@
   }
 
   html {
-    @apply font-sans;
+    @apply font-serif;
   }
 }
 
@@ -272,7 +274,9 @@
   line-height: 1.1;
   font-weight: 800;
   letter-spacing: -0.02em;
-}.material-symbols-outlined {
+}
+
+.material-symbols-outlined {
   font-family: 'Material Symbols Outlined';
   font-weight: normal;
   font-style: normal;
