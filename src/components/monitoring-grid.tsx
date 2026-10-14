@@ -1,6 +1,9 @@
 "use client"
 
-import { Card, CardContent } from "@/components/ui/card"
+import { Check, Clock3, Minus, X } from "lucide-react"
+import { EmptyState } from "@/components/empty-state"
+import { formatDate, initials } from "@/lib/format"
+import { cn } from "@/lib/utils"
 
 type Row = {
   id: string
@@ -13,141 +16,143 @@ type Row = {
   statusPerMonth: string[]
 }
 
-function StatusBadge({ status }: { status: string }) {
-  if (status === "TEPAT") {
-    return (
-      <div className="w-full h-full flex items-center justify-center">
-        <span className="text-[10px] font-bold text-emerald-700 bg-emerald-100 px-1.5 py-0.5 rounded-md">TEPAT</span>
-      </div>
-    )
-  }
-  if (status === "TELAT") {
-    return (
-      <div className="w-full h-full flex items-center justify-center">
-        <span className="text-[10px] font-bold text-amber-700 bg-amber-100 px-1.5 py-0.5 rounded-md">TELAT</span>
-      </div>
-    )
-  }
-  if (status === "BELUM BAYAR") {
-    return (
-      <div className="w-full h-full flex items-center justify-center">
-        <span className="text-[10px] font-bold text-red-700 bg-red-100 px-1.5 py-0.5 rounded-md whitespace-nowrap">BELUM</span>
-      </div>
-    )
-  }
-  if (status === "KOSONG") {
-    return (
-      <div className="w-full h-full flex items-center justify-center">
-        <span className="text-[10px] text-slate-400">—</span>
-      </div>
-    )
-  }
+const STATUS = {
+  TEPAT: { label: "Tepat waktu", icon: Check, cell: "bg-success text-white dark:text-emerald-950", pill: "bg-success-soft text-success" },
+  TELAT: { label: "Telat (> 7 hari)", icon: Clock3, cell: "bg-warning text-white dark:text-amber-950", pill: "bg-warning-soft text-warning" },
+  "BELUM BAYAR": { label: "Belum bayar", icon: X, cell: "bg-danger text-white dark:text-red-950", pill: "bg-danger-soft text-danger" },
+  KOSONG: { label: "Belum menghuni", icon: Minus, cell: "bg-muted text-muted-foreground/50", pill: "bg-muted text-muted-foreground" },
+  "—": { label: "Belum jatuh tempo", icon: Minus, cell: "bg-muted/60 text-muted-foreground/40", pill: "bg-muted text-muted-foreground" },
+} as const
+
+type StatusKey = keyof typeof STATUS
+
+function statusOf(s: string) {
+  return STATUS[(s in STATUS ? s : "—") as StatusKey]
+}
+
+export function MonitoringLegend() {
   return (
-    <div className="w-full h-full flex items-center justify-center">
-      <span className="text-[10px] text-slate-300">—</span>
+    <div className="flex flex-wrap gap-x-4 gap-y-2 text-xs text-muted-foreground">
+      {(["TEPAT", "TELAT", "BELUM BAYAR", "KOSONG"] as StatusKey[]).map((k) => {
+        const s = STATUS[k]
+        return (
+          <span key={k} className="flex items-center gap-1.5">
+            <span className={cn("flex size-5 items-center justify-center rounded-md", s.cell)}>
+              <s.icon className="size-3" strokeWidth={3} />
+            </span>
+            {s.label}
+          </span>
+        )
+      })}
     </div>
   )
-}
-
-function CurrentStatusBadge({ status }: { status: string }) {
-  const base = "text-[11px] font-bold px-2 py-0.5 rounded-md whitespace-nowrap"
-  if (status === "TEPAT") return <span className={`${base} text-emerald-700 bg-emerald-100`}>TEPAT</span>
-  if (status === "TELAT") return <span className={`${base} text-amber-700 bg-amber-100`}>TELAT</span>
-  return <span className={`${base} text-red-700 bg-red-100`}>BELUM BAYAR</span>
-}
-
-function fmtDate(d: Date | null | undefined): string {
-  if (!d) return "—"
-  return new Date(d).toLocaleDateString("id-ID", { day: "2-digit", month: "short", year: "numeric" })
 }
 
 export function MonitoringGrid({ rows, months }: { rows: Row[]; months: string[] }) {
   if (rows.length === 0) {
     return (
-      <Card className="border-slate-200/60 shadow-sm bg-white/70 backdrop-blur-xl">
-        <CardContent className="py-16 text-center text-muted-foreground">
-          Tidak ada penghuni aktif saat ini.
-        </CardContent>
-      </Card>
+      <section className="surface">
+        <EmptyState title="Tidak ada penghuni aktif" description="Monitoring akan muncul setelah ada penghuni aktif." />
+      </section>
     )
   }
 
   return (
-    <Card className="border-slate-200/60 shadow-sm bg-white/70 backdrop-blur-xl overflow-hidden">
-      <CardContent className="p-0">
-        <div className="overflow-x-auto">
-          <table className="w-full text-sm border-collapse">
-            <thead>
-              <tr className="bg-slate-50 border-b border-slate-100">
-                {/* Sticky fixed columns */}
-                <th className="text-left py-3 px-4 font-semibold text-slate-600 text-xs uppercase tracking-wider sticky left-0 bg-slate-50 z-10 min-w-[140px]">
-                  Penghuni
+    <section className="surface overflow-hidden">
+      <div className="thin-scrollbar overflow-x-auto">
+        <table className="w-full border-separate border-spacing-0 text-sm">
+          <thead>
+            <tr className="bg-muted/50">
+              <th className="sticky left-0 z-20 min-w-[220px] border-b bg-muted/95 px-4 py-3 text-left text-[11px] font-semibold tracking-[0.06em] text-muted-foreground uppercase backdrop-blur">
+                Penghuni
+              </th>
+              <th className="border-b px-3 py-3 text-center text-[11px] font-semibold tracking-[0.06em] whitespace-nowrap text-muted-foreground uppercase">
+                Bulan ini
+              </th>
+              <th className="border-b px-3 py-3 text-center text-[11px] font-semibold tracking-[0.06em] text-muted-foreground uppercase">
+                Ketepatan
+              </th>
+              {months.map((month) => (
+                <th key={month} className="border-b px-1.5 py-3 text-center text-[11px] font-semibold whitespace-nowrap text-muted-foreground">
+                  {month}
                 </th>
-                <th className="text-left py-3 px-3 font-semibold text-slate-600 text-xs uppercase tracking-wider sticky left-[140px] bg-slate-50 z-10 min-w-[65px]">
-                  Kamar
-                </th>
-                <th className="text-left py-3 px-3 font-semibold text-slate-600 text-xs uppercase tracking-wider min-w-[80px]">
-                  Masa Sewa
-                </th>
-                <th className="text-left py-3 px-3 font-semibold text-slate-600 text-xs uppercase tracking-wider min-w-[105px]">
-                  Tgl Masuk
-                </th>
-                <th className="text-left py-3 px-3 font-semibold text-slate-600 text-xs uppercase tracking-wider min-w-[105px]">
-                  Akhir Sewa
-                </th>
-                <th className="text-center py-3 px-3 font-semibold text-slate-600 text-xs uppercase tracking-wider min-w-[90px]">
-                  Status Bln Ini
-                </th>
-                {/* Month columns */}
-                {months.map((month) => (
-                  <th
-                    key={month}
-                    className="py-3 px-2 font-semibold text-slate-600 text-xs uppercase tracking-wider text-center min-w-[70px]"
-                  >
-                    {month}
-                  </th>
-                ))}
-              </tr>
-            </thead>
-            <tbody className="divide-y divide-slate-50">
-              {rows.map((row, i) => {
-                const bg = i % 2 === 0 ? "bg-white" : "bg-slate-50/30"
-                const stickyBg = i % 2 === 0 ? "bg-white" : "bg-slate-50/50"
-                return (
-                  <tr key={row.id} className={`hover:bg-indigo-50/30 transition-colors ${bg}`}>
-                    <td className={`py-3 px-4 font-semibold text-slate-800 sticky left-0 z-10 text-sm ${stickyBg}`}>
-                      <span className="truncate block max-w-[130px]" title={row.name}>{row.name}</span>
-                    </td>
-                    <td className={`py-3 px-3 sticky left-[140px] z-10 ${stickyBg}`}>
-                      <span className="inline-block bg-indigo-100 text-indigo-700 text-xs font-bold px-2 py-0.5 rounded-md">
-                        {row.room}
+              ))}
+              <th className="border-b px-4 py-3 text-left text-[11px] font-semibold tracking-[0.06em] whitespace-nowrap text-muted-foreground uppercase">
+                Masa sewa
+              </th>
+            </tr>
+          </thead>
+          <tbody>
+            {rows.map((row) => {
+              const current = statusOf(row.currentStatus)
+              const counted = row.statusPerMonth.filter((s) => s === "TEPAT" || s === "TELAT" || s === "BELUM BAYAR")
+              const onTime = counted.filter((s) => s === "TEPAT").length
+              const score = counted.length > 0 ? Math.round((onTime / counted.length) * 100) : null
+              return (
+                <tr key={row.id} className="group">
+                  <td className="sticky left-0 z-10 border-b bg-card px-4 py-2.5 transition-colors group-hover:bg-muted">
+                    <div className="flex items-center gap-3">
+                      <span className="flex size-9 shrink-0 items-center justify-center rounded-xl bg-muted text-[11px] font-bold text-muted-foreground">
+                        {initials(row.name)}
                       </span>
-                    </td>
-                    <td className="py-3 px-3 text-xs text-slate-600 font-medium">{row.masaSewa}</td>
-                    <td className="py-3 px-3 text-xs text-slate-500">{fmtDate(row.tglMasuk)}</td>
-                    <td className="py-3 px-3 text-xs text-slate-500">{fmtDate(row.akhirSewa)}</td>
-                    <td className="py-3 px-3 text-center">
-                      <CurrentStatusBadge status={row.currentStatus} />
-                    </td>
-                    {row.statusPerMonth.map((status, j) => (
-                      <td key={j} className="py-2 px-1 text-center h-10">
-                        <StatusBadge status={status} />
+                      <div className="min-w-0">
+                        <p className="max-w-[150px] truncate font-semibold" title={row.name}>{row.name}</p>
+                        <p className="font-mono text-xs text-muted-foreground">{row.room}</p>
+                      </div>
+                    </div>
+                  </td>
+                  <td className="border-b px-3 py-2.5 text-center transition-colors group-hover:bg-muted/50">
+                    <span className={cn("inline-flex h-6 items-center gap-1 rounded-full px-2.5 text-xs font-semibold whitespace-nowrap", current.pill)}>
+                      <current.icon className="size-3" strokeWidth={3} />
+                      {row.currentStatus === "—" ? "Belum tempo" : current.label.replace(" (> 7 hari)", "")}
+                    </span>
+                  </td>
+                  <td className="border-b px-3 py-2.5 transition-colors group-hover:bg-muted/50">
+                    {score === null ? (
+                      <span className="block text-center text-xs text-muted-foreground">—</span>
+                    ) : (
+                      <div className="mx-auto flex w-24 items-center gap-2">
+                        <div className="h-1.5 flex-1 overflow-hidden rounded-full bg-muted">
+                          <div
+                            className={cn("h-full rounded-full", score >= 80 ? "bg-success" : score >= 50 ? "bg-warning" : "bg-danger")}
+                            style={{ width: `${Math.max(4, score)}%` }}
+                          />
+                        </div>
+                        <span className="w-9 text-right text-xs font-semibold tabular-nums">{score}%</span>
+                      </div>
+                    )}
+                  </td>
+                  {row.statusPerMonth.map((status, j) => {
+                    const s = statusOf(status)
+                    return (
+                      <td key={j} className="border-b px-1 py-2.5 text-center transition-colors group-hover:bg-muted/50">
+                        <span
+                          title={`${months[j]} · ${s.label}`}
+                          className={cn("mx-auto flex size-7 items-center justify-center rounded-lg transition-transform hover:scale-110", s.cell)}
+                        >
+                          <s.icon className="size-3.5" strokeWidth={3} />
+                        </span>
                       </td>
-                    ))}
-                  </tr>
-                )
-              })}
-            </tbody>
-          </table>
-        </div>
-
-        {/* Summary footer */}
-        <div className="border-t border-slate-100 px-4 py-3 bg-slate-50/50 flex flex-wrap gap-4 text-xs text-slate-500">
-          <span>Total penghuni aktif: <strong className="text-slate-700">{rows.length}</strong></span>
-          <span>•</span>
-          <span>Menampilkan <strong className="text-slate-700">{months.length} bulan</strong> terakhir</span>
-        </div>
-      </CardContent>
-    </Card>
+                    )
+                  })}
+                  <td className="border-b px-4 py-2.5 text-xs whitespace-nowrap text-muted-foreground transition-colors group-hover:bg-muted/50">
+                    <span className="tabular-nums">{formatDate(row.tglMasuk)}</span>
+                    <span className="mx-1.5">→</span>
+                    <span className="font-medium text-foreground tabular-nums">{row.akhirSewa ? formatDate(row.akhirSewa) : "—"}</span>
+                    <span className="ml-2 rounded bg-muted px-1.5 py-0.5 text-[10px]">{row.masaSewa}</span>
+                  </td>
+                </tr>
+              )
+            })}
+          </tbody>
+        </table>
+      </div>
+      <div className="flex flex-wrap items-center justify-between gap-3 px-5 py-3 text-xs text-muted-foreground">
+        <span>
+          {rows.length} penghuni aktif · {months.length} bulan terakhir (terbaru di kiri)
+        </span>
+        <span>Ketepatan = bulan bayar tepat waktu ÷ bulan yang sudah jatuh tempo</span>
+      </div>
+    </section>
   )
 }

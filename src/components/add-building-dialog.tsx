@@ -2,13 +2,17 @@
 
 import { useState } from "react"
 import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog"
-import { Button } from "@/components/ui/button"
+import { Button, buttonVariants } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
 import { Label } from "@/components/ui/label"
+import { Textarea } from "@/components/ui/textarea"
+import { BUILDING_TYPES } from "@/lib/building-types"
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select"
 import { Plus } from "lucide-react"
 import { createBuilding } from "@/app/actions/buildings"
 import { toast } from "sonner"
+
+const typeOptions = BUILDING_TYPES
 
 export function AddBuildingDialog() {
   const [open, setOpen] = useState(false)
@@ -22,38 +26,39 @@ export function AddBuildingDialog() {
     if (result.error) {
       toast.error(result.error)
     } else {
-      toast.success("Kamar berhasil ditambahkan!")
+      toast.success("Unit berhasil ditambahkan!")
       setOpen(false)
     }
   }
 
   return (
     <Dialog open={open} onOpenChange={setOpen}>
-      <DialogTrigger className="flex items-center gap-2 bg-primary text-primary-foreground hover:bg-primary/90 px-4 py-2.5 rounded-lg font-medium transition-all shadow-sm">
+      <DialogTrigger className={buttonVariants({ size: "lg" })}>
         <Plus className="h-4 w-4" />
         <span>Tambah Kamar</span>
       </DialogTrigger>
       <DialogContent className="sm:max-w-[425px]">
         <DialogHeader>
-          <DialogTitle>Tambah Kamar / Properti</DialogTitle>
+          <DialogTitle>Tambah Unit</DialogTitle>
           <DialogDescription>
-            Masukkan data properti baru. Klik simpan setelah selesai.
+            Kamar, kios, kontrakan, atau apartemen. Klik simpan setelah selesai.
           </DialogDescription>
         </DialogHeader>
         <form action={handleSubmit} className="space-y-4 pt-4">
           <div className="space-y-2">
-            <Label htmlFor="code">Kode Kamar</Label>
-            <Input id="code" name="code" placeholder="Misal: A01" required />
+            <Label htmlFor="code">Kode / Nama Unit</Label>
+            <Input id="code" name="code" placeholder="Misal: BA-8 atau Sky Terrace Lagoon" required />
           </div>
           <div className="space-y-2">
             <Label htmlFor="type">Tipe Bangunan</Label>
-            <Select name="type" defaultValue="Kosan">
+            <Select name="type" defaultValue="Kamar">
               <SelectTrigger>
                 <SelectValue placeholder="Pilih Tipe" />
               </SelectTrigger>
               <SelectContent>
-                <SelectItem value="Kosan">Kosan</SelectItem>
-                <SelectItem value="Kontrakan">Kontrakan</SelectItem>
+                {typeOptions.map((t) => (
+                  <SelectItem key={t} value={t}>{t}</SelectItem>
+                ))}
               </SelectContent>
             </Select>
           </div>
@@ -73,6 +78,11 @@ export function AddBuildingDialog() {
                 <SelectItem value="Tahunan">Tahunan</SelectItem>
               </SelectContent>
             </Select>
+          </div>
+          <div className="space-y-2">
+            <Label htmlFor="description">Keterangan <span className="font-normal text-muted-foreground">(opsional)</span></Label>
+            <Textarea id="description" name="description" rows={2} placeholder="Misal: Daan Mogot, Jakarta Barat. Sudah termasuk IPL dan parkir." />
+            <p className="text-xs text-muted-foreground">Tampil di halaman depan untuk calon penyewa.</p>
           </div>
           <div className="flex justify-end pt-4">
             <Button type="submit" disabled={loading}>

@@ -1,31 +1,33 @@
-import { AppSidebar } from "@/components/app-sidebar"
-import { SidebarProvider, SidebarTrigger } from "@/components/ui/sidebar"
+import { getServerSession } from "next-auth"
+import { redirect } from "next/navigation"
+import { AppSidebar, type SessionUser } from "@/components/app-sidebar"
+import { Topbar } from "@/components/shell/topbar"
+import { SidebarInset, SidebarProvider } from "@/components/ui/sidebar"
+import { authOptions } from "@/lib/auth"
 
-export default function DashboardLayout({
+export default async function DashboardLayout({
   children,
 }: {
   children: React.ReactNode
 }) {
+  const session = await getServerSession(authOptions)
+  if (!session?.user) redirect("/login")
+
+  const user: SessionUser = {
+    name: session.user.name ?? "Pengguna",
+    email: session.user.email ?? "",
+    role: (session.user as { role?: string }).role ?? "ADMIN",
+  }
+
   return (
     <SidebarProvider>
-      <div className="flex w-full h-screen overflow-hidden bg-slate-50/50">
-        <AppSidebar />
-        <main className="flex-1 flex flex-col overflow-y-auto">
-          <header className="flex h-16 shrink-0 items-center gap-4 border-b bg-white px-6 shadow-sm z-10 sticky top-0">
-            <SidebarTrigger className="-ml-2" />
-            <div className="flex flex-1 items-center justify-between">
-              <h1 className="font-semibold text-lg tracking-tight text-slate-800">Admin Panel</h1>
-              <div className="flex items-center gap-4">
-                {/* Placeholder for User Profile / Notifications */}
-                <div className="h-8 w-8 rounded-full bg-slate-200 border border-slate-300"></div>
-              </div>
-            </div>
-          </header>
-          <div className="flex-1 p-6 lg:p-8 w-full max-w-7xl mx-auto">
-            {children}
-          </div>
-        </main>
-      </div>
+      <AppSidebar user={user} />
+      <SidebarInset className="app-canvas min-w-0">
+        <Topbar user={user} />
+        <div className="mx-auto w-full max-w-[1400px] flex-1 px-4 py-6 sm:px-6 lg:px-8 lg:py-8">
+          {children}
+        </div>
+      </SidebarInset>
     </SidebarProvider>
   )
 }

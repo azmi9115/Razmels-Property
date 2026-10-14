@@ -1,51 +1,70 @@
-@import url("https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&display=swap");
 @import "tailwindcss";
 @import "tw-animate-css";
 @import "shadcn/tailwind.css";
 
 @custom-variant dark (&:is(.dark *));
 
+/*
+ * Razmel's Property design system
+ * Brand diambil dari logo: navy #121826, hijau #42c18e, aksen indigo #5b5fe0.
+ * Semua warna lewat token di bawah — jangan pakai hex langsung di komponen,
+ * supaya light/dark mode tetap konsisten.
+ */
+
 @theme inline {
+  --font-sans: "Plus Jakarta Sans Variable", ui-sans-serif, system-ui, sans-serif;
+  --font-heading: "Plus Jakarta Sans Variable", ui-sans-serif, system-ui, sans-serif;
+  --font-mono: "JetBrains Mono Variable", ui-monospace, SFMono-Regular, monospace;
+
   --color-background: var(--background);
   --color-foreground: var(--foreground);
-  --font-geist-sans: "Geist", sans-serif;
-  --font-geist-mono: "Geist Mono", monospace;
-  --font-plus-jakarta-sans: "Plus Jakarta Sans", sans-serif;
-  --font-inter: "Inter", sans-serif;
-  --font-lora: "Lora", serif;
-  --font-sans: var(--font-plus-jakarta-sans);
-  --font-serif: var(--font-lora);
-  --font-mono: var(--font-geist-mono);
-  --font-heading: var(--font-inter);
-  --color-sidebar-ring: var(--sidebar-ring);
-  --color-sidebar-border: var(--sidebar-border);
-  --color-sidebar-accent-foreground: var(--sidebar-accent-foreground);
-  --color-sidebar-accent: var(--sidebar-accent);
-  --color-sidebar-primary-foreground: var(--sidebar-primary-foreground);
-  --color-sidebar-primary: var(--sidebar-primary);
-  --color-sidebar-foreground: var(--sidebar-foreground);
-  --color-sidebar: var(--sidebar);
-  --color-chart-5: var(--chart-5);
-  --color-chart-4: var(--chart-4);
-  --color-chart-3: var(--chart-3);
-  --color-chart-2: var(--chart-2);
-  --color-chart-1: var(--chart-1);
-  --color-ring: var(--ring);
-  --color-input: var(--input);
-  --color-border: var(--border);
-  --color-destructive: var(--destructive);
-  --color-accent-foreground: var(--accent-foreground);
-  --color-accent: var(--accent);
-  --color-muted-foreground: var(--muted-foreground);
-  --color-muted: var(--muted);
-  --color-secondary-foreground: var(--secondary-foreground);
-  --color-secondary: var(--secondary);
-  --color-primary-foreground: var(--primary-foreground);
-  --color-primary: var(--primary);
-  --color-popover-foreground: var(--popover-foreground);
-  --color-popover: var(--popover);
-  --color-card-foreground: var(--card-foreground);
   --color-card: var(--card);
+  --color-card-foreground: var(--card-foreground);
+  --color-popover: var(--popover);
+  --color-popover-foreground: var(--popover-foreground);
+  --color-primary: var(--primary);
+  --color-primary-foreground: var(--primary-foreground);
+  --color-secondary: var(--secondary);
+  --color-secondary-foreground: var(--secondary-foreground);
+  --color-muted: var(--muted);
+  --color-muted-foreground: var(--muted-foreground);
+  --color-accent: var(--accent);
+  --color-accent-foreground: var(--accent-foreground);
+  --color-destructive: var(--destructive);
+  --color-border: var(--border);
+  --color-input: var(--input);
+  --color-ring: var(--ring);
+
+  --color-chart-1: var(--chart-1);
+  --color-chart-2: var(--chart-2);
+  --color-chart-3: var(--chart-3);
+  --color-chart-4: var(--chart-4);
+  --color-chart-5: var(--chart-5);
+
+  --color-sidebar: var(--sidebar);
+  --color-sidebar-foreground: var(--sidebar-foreground);
+  --color-sidebar-primary: var(--sidebar-primary);
+  --color-sidebar-primary-foreground: var(--sidebar-primary-foreground);
+  --color-sidebar-accent: var(--sidebar-accent);
+  --color-sidebar-accent-foreground: var(--sidebar-accent-foreground);
+  --color-sidebar-border: var(--sidebar-border);
+  --color-sidebar-ring: var(--sidebar-ring);
+
+  /* Status: selalu dipasangkan dengan ikon/label, jangan warna saja */
+  --color-success: var(--success);
+  --color-success-soft: var(--success-soft);
+  --color-warning: var(--warning);
+  --color-warning-soft: var(--warning-soft);
+  --color-danger: var(--danger);
+  --color-danger-soft: var(--danger-soft);
+  --color-info: var(--info);
+  --color-info-soft: var(--info-soft);
+
+  --color-brand-navy: #121826;
+  --color-brand-ink: #0b1120;
+  --color-brand-green: #42c18e;
+  --color-brand-indigo: #5b5fe0;
+
   --radius-sm: calc(var(--radius) * 0.6);
   --radius-md: calc(var(--radius) * 0.8);
   --radius-lg: var(--radius);
@@ -53,176 +72,102 @@
   --radius-2xl: calc(var(--radius) * 1.8);
   --radius-3xl: calc(var(--radius) * 2.2);
   --radius-4xl: calc(var(--radius) * 2.6);
-
-  /* Landing Page Specific Colors */
-  --color-background: #f7f9fb;
-  --color-border-subtle: #E2E8F0;
-  --color-error: #ba1a1a;
-  --color-error-container: #ffdad6;
-  --color-inverse-on-surface: #eff1f3;
-  --color-inverse-primary: #bec6e0;
-  --color-inverse-surface: #2d3133;
-  --color-nav-bg: #0F172A;
-  --color-nav-text: #94A3B8;
-  --color-on-background: #191c1e;
-  --color-on-error: #ffffff;
-  --color-on-error-container: #93000a;
-  --color-on-primary: #ffffff;
-  --color-on-primary-container: #7c839b;
-  --color-on-primary-fixed: #131b2e;
-  --color-on-primary-fixed-variant: #3f465c;
-  --color-on-secondary: #ffffff;
-  --color-on-secondary-container: #fefcff;
-  --color-on-secondary-fixed: #001a42;
-  --color-on-secondary-fixed-variant: #004395;
-  --color-on-surface: #191c1e;
-  --color-on-surface-variant: #45464d;
-  --color-on-tertiary: #ffffff;
-  --color-on-tertiary-container: #008cc7;
-  --color-on-tertiary-fixed: #001e2f;
-  --color-on-tertiary-fixed-variant: #004c6e;
-  --color-outline: #76777d;
-  --color-outline-variant: #c6c6cd;
-  --color-primary: #000000;
-  --color-primary-container: #131b2e;
-  --color-primary-fixed: #dae2fd;
-  --color-primary-fixed-dim: #bec6e0;
-  --color-secondary: #0058be;
-  --color-secondary-container: #2170e4;
-  --color-secondary-fixed: #d8e2ff;
-  --color-secondary-fixed-dim: #adc6ff;
-  --color-sidebar-active: #1E293B;
-  --color-slate-text: #64748B;
-  --color-surface: #f7f9fb;
-  --color-surface-bright: #f7f9fb;
-  --color-surface-container: #eceef0;
-  --color-surface-container-high: #e6e8ea;
-  --color-surface-container-highest: #e0e3e5;
-  --color-surface-container-low: #f2f4f6;
-  --color-surface-container-lowest: #ffffff;
-  --color-surface-dim: #d8dadc;
-  --color-surface-tint: #565e74;
-  --color-surface-variant: #e0e3e5;
-  --color-tertiary: #000000;
-  --color-tertiary-container: #001e2f;
-  --color-tertiary-fixed: #c9e6ff;
-  --color-tertiary-fixed-dim: #89ceff;
-
-  /* Typography */
-  --text-headline-xl: 3.5rem;
-  --text-headline-xl--line-height: 1.1;
-  --text-headline-xl--letter-spacing: -0.02em;
-
-  --text-body-lg: 1.125rem;
-  --text-body-lg--line-height: 1.6;
-  --text-body-lg--letter-spacing: 0;
-
-  --text-headline-md: 1.75rem;
-  --text-headline-md--line-height: 1.3;
-  --text-headline-md--letter-spacing: -0.01em;
-
-  --text-label-md: 0.875rem;
-  --text-label-md--line-height: 1.4;
-  --text-label-md--letter-spacing: 0.05em;
-
-  --text-body-md: 1rem;
-  --text-body-md--line-height: 1.5;
-  --text-body-md--letter-spacing: 0;
-
-  --text-headline-lg: 2.5rem;
-  --text-headline-lg--line-height: 1.2;
-  --text-headline-lg--letter-spacing: -0.01em;
-
-  --text-display-xl: 4.5rem;
-  --text-display-xl--line-height: 1;
-  --text-display-xl--letter-spacing: -0.03em;
-
-  --text-label-sm: 0.75rem;
-  --text-label-sm--line-height: 1.5;
-  --text-label-sm--letter-spacing: 0.08em;
-
-  --font-label-md: var(--font-inter);
-  --font-body-lg: var(--font-inter);
-  --font-body-md: var(--font-inter);
-  --font-label-sm: var(--font-inter);
-
-  --font-headline-xl: var(--font-plus-jakarta-sans);
-  --font-headline-lg: var(--font-plus-jakarta-sans);
-  --font-headline-md: var(--font-plus-jakarta-sans);
-  --font-display-xl: var(--font-plus-jakarta-sans);
-
-  /* Layout */
-  --spacing-margin-desktop: 80px;
-  --spacing-gutter: 24px;
 }
 
 :root {
-  --background: oklch(1 0 0);
-  --foreground: oklch(0.145 0 0);
-  --card: oklch(1 0 0);
-  --card-foreground: oklch(0.145 0 0);
-  --popover: oklch(1 0 0);
-  --popover-foreground: oklch(0.145 0 0);
-  --primary: oklch(0.205 0 0);
-  --primary-foreground: oklch(0.985 0 0);
-  --secondary: oklch(0.97 0 0);
-  --secondary-foreground: oklch(0.205 0 0);
-  --muted: oklch(0.97 0 0);
-  --muted-foreground: oklch(0.556 0 0);
-  --accent: oklch(0.97 0 0);
-  --accent-foreground: oklch(0.205 0 0);
-  --destructive: oklch(0.577 0.245 27.325);
-  --border: oklch(0.922 0 0);
-  --input: oklch(0.922 0 0);
-  --ring: oklch(0.708 0 0);
-  --chart-1: oklch(0.87 0 0);
-  --chart-2: oklch(0.556 0 0);
-  --chart-3: oklch(0.439 0 0);
-  --chart-4: oklch(0.371 0 0);
-  --chart-5: oklch(0.269 0 0);
-  --radius: 0.625rem;
-  --sidebar: oklch(0.985 0 0);
-  --sidebar-foreground: oklch(0.145 0 0);
-  --sidebar-primary: oklch(0.205 0 0);
-  --sidebar-primary-foreground: oklch(0.985 0 0);
-  --sidebar-accent: oklch(0.97 0 0);
-  --sidebar-accent-foreground: oklch(0.205 0 0);
-  --sidebar-border: oklch(0.922 0 0);
-  --sidebar-ring: oklch(0.708 0 0);
+  color-scheme: light;
+  --radius: 0.75rem;
+
+  --background: #f4f6fa;
+  --foreground: #0e1422;
+  --card: #ffffff;
+  --card-foreground: #0e1422;
+  --popover: #ffffff;
+  --popover-foreground: #0e1422;
+  --primary: #087f58;
+  --primary-foreground: #ffffff;
+  --secondary: #eef1f6;
+  --secondary-foreground: #0e1422;
+  --muted: #eef1f6;
+  --muted-foreground: #5b6578;
+  --accent: #e7f6ef;
+  --accent-foreground: #065f46;
+  --destructive: #d23b3b;
+  --border: #e3e7ee;
+  --input: #dbe0e8;
+  --ring: #10b981;
+
+  /* Grafik: pemasukan / pengeluaran (divalidasi CVD), lalu indigo brand */
+  --chart-1: #1baf7a;
+  --chart-2: #eb6834;
+  --chart-3: #5b5fe0;
+  --chart-4: #eda100;
+  --chart-5: #64748b;
+  --chart-grid: #e8ebf1;
+  --chart-axis: #8a93a3;
+
+  --success: #0b7a52;
+  --success-soft: #e3f5ec;
+  --warning: #a55a06;
+  --warning-soft: #fdf1dc;
+  --danger: #c42b2b;
+  --danger-soft: #fde8e8;
+  --info: #4b4fd1;
+  --info-soft: #ecebfd;
+
+  /* Sidebar selalu navy brand, di mode apa pun */
+  --sidebar: #0f1524;
+  --sidebar-foreground: #aab4c6;
+  --sidebar-primary: #34d399;
+  --sidebar-primary-foreground: #04120c;
+  --sidebar-accent: rgb(255 255 255 / 0.06);
+  --sidebar-accent-foreground: #ffffff;
+  --sidebar-border: rgb(255 255 255 / 0.08);
+  --sidebar-ring: #34d399;
 }
 
 .dark {
-  --background: oklch(0.145 0 0);
-  --foreground: oklch(0.985 0 0);
-  --card: oklch(0.205 0 0);
-  --card-foreground: oklch(0.985 0 0);
-  --popover: oklch(0.205 0 0);
-  --popover-foreground: oklch(0.985 0 0);
-  --primary: oklch(0.922 0 0);
-  --primary-foreground: oklch(0.205 0 0);
-  --secondary: oklch(0.269 0 0);
-  --secondary-foreground: oklch(0.985 0 0);
-  --muted: oklch(0.269 0 0);
-  --muted-foreground: oklch(0.708 0 0);
-  --accent: oklch(0.269 0 0);
-  --accent-foreground: oklch(0.985 0 0);
-  --destructive: oklch(0.704 0.191 22.216);
-  --border: oklch(1 0 0 / 10%);
-  --input: oklch(1 0 0 / 15%);
-  --ring: oklch(0.556 0 0);
-  --chart-1: oklch(0.87 0 0);
-  --chart-2: oklch(0.556 0 0);
-  --chart-3: oklch(0.439 0 0);
-  --chart-4: oklch(0.371 0 0);
-  --chart-5: oklch(0.269 0 0);
-  --sidebar: oklch(0.205 0 0);
-  --sidebar-foreground: oklch(0.985 0 0);
-  --sidebar-primary: oklch(0.488 0.243 264.376);
-  --sidebar-primary-foreground: oklch(0.985 0 0);
-  --sidebar-accent: oklch(0.269 0 0);
-  --sidebar-accent-foreground: oklch(0.985 0 0);
-  --sidebar-border: oklch(1 0 0 / 10%);
-  --sidebar-ring: oklch(0.556 0 0);
+  color-scheme: dark;
+  --background: #0a0f1a;
+  --foreground: #e9edf5;
+  --card: #111a2a;
+  --card-foreground: #e9edf5;
+  --popover: #141e31;
+  --popover-foreground: #e9edf5;
+  --primary: #10b981;
+  --primary-foreground: #03140d;
+  --secondary: #1a2437;
+  --secondary-foreground: #e9edf5;
+  --muted: #18212f;
+  --muted-foreground: #8f9bb0;
+  --accent: #10342a;
+  --accent-foreground: #6ee7b7;
+  --destructive: #f05252;
+  --border: #212b3d;
+  --input: #2a3549;
+  --ring: #34d399;
+
+  --chart-1: #199e70;
+  --chart-2: #d95926;
+  --chart-3: #8285ee;
+  --chart-4: #c98500;
+  --chart-5: #8f9bb0;
+  --chart-grid: #1d2738;
+  --chart-axis: #7d889b;
+
+  --success: #34d399;
+  --success-soft: rgb(16 185 129 / 0.14);
+  --warning: #fbbf24;
+  --warning-soft: rgb(245 158 11 / 0.14);
+  --danger: #f87171;
+  --danger-soft: rgb(239 68 68 / 0.15);
+  --info: #a5a8ff;
+  --info-soft: rgb(99 102 241 / 0.16);
+
+  --sidebar: #070b14;
+  --sidebar-foreground: #98a3b8;
+  --sidebar-accent: rgb(255 255 255 / 0.05);
+  --sidebar-border: rgb(255 255 255 / 0.06);
 }
 
 @layer base {
@@ -230,63 +175,71 @@
     @apply border-border outline-ring/50;
   }
 
+  html {
+    @apply font-sans;
+    -webkit-font-smoothing: antialiased;
+    -moz-osx-font-smoothing: grayscale;
+  }
+
   body {
     @apply bg-background text-foreground;
+    font-feature-settings: "ss01", "cv11";
   }
 
-  html {
-    @apply font-serif;
+  ::selection {
+    background: color-mix(in oklab, var(--ring) 30%, transparent);
   }
 }
 
-/* Material Design Typography Mappings */
-.font-label-sm,
-.text-label-sm {
-  font-family: var(--font-space-mono);
-  font-size: 0.75rem;
-  line-height: 1rem;
-  font-weight: 700;
-  text-transform: uppercase;
-  letter-spacing: 0.1em;
+@layer components {
+  /* Kartu standar aplikasi */
+  .surface {
+    @apply rounded-2xl border bg-card text-card-foreground shadow-[0_1px_2px_rgb(14_20_34/0.04),0_8px_24px_-12px_rgb(14_20_34/0.08)] dark:shadow-none;
+  }
+
+  /* Label kecil di atas angka / judul bagian */
+  .eyebrow {
+    @apply text-[11px] font-semibold tracking-[0.08em] text-muted-foreground uppercase;
+  }
+
+  /* Latar dekoratif halaman dashboard: cahaya hijau tipis di pojok atas */
+  .app-canvas {
+    background-image:
+      radial-gradient(60rem 28rem at 0% -10%, color-mix(in oklab, var(--ring) 9%, transparent), transparent 70%),
+      radial-gradient(40rem 24rem at 100% -15%, color-mix(in oklab, var(--color-brand-indigo) 7%, transparent), transparent 70%);
+  }
+
+  /* Pola grid untuk panel navy (login & landing) */
+  .grid-pattern {
+    background-image:
+      linear-gradient(rgb(255 255 255 / 0.05) 1px, transparent 1px),
+      linear-gradient(90deg, rgb(255 255 255 / 0.05) 1px, transparent 1px);
+    background-size: 44px 44px;
+  }
+
+  .thin-scrollbar {
+    scrollbar-width: thin;
+    scrollbar-color: var(--input) transparent;
+  }
 }
 
-.font-body-md,
-.text-body-md {
-  font-family: var(--font-plus-jakarta-sans);
-  font-size: 1rem;
-  line-height: 1.75;
-  font-weight: 400;
+@keyframes wave {
+  0%, 60%, 100% { transform: rotate(0deg); }
+  10%, 30% { transform: rotate(14deg); }
+  20% { transform: rotate(-8deg); }
+  40% { transform: rotate(-4deg); }
+  50% { transform: rotate(10deg); }
 }
 
-.font-headline-lg,
-.text-headline-lg {
-  font-family: var(--font-plus-jakarta-sans);
-  font-size: 2.5rem;
-  line-height: 1.2;
-  font-weight: 700;
-  letter-spacing: -0.01em;
-}
+@media print {
+  .no-print,
+  [data-slot="sidebar"],
+  [data-slot="sidebar-gap"] {
+    display: none !important;
+  }
 
-.font-display-xl,
-.text-display-xl {
-  font-family: var(--font-plus-jakarta-sans);
-  font-size: 3.75rem;
-  line-height: 1.1;
-  font-weight: 800;
-  letter-spacing: -0.02em;
-}
-
-.material-symbols-outlined {
-  font-family: 'Material Symbols Outlined';
-  font-weight: normal;
-  font-style: normal;
-  font-size: 24px;
-  line-height: 1;
-  letter-spacing: normal;
-  text-transform: none;
-  display: inline-block;
-  white-space: nowrap;
-  word-wrap: normal;
-  direction: ltr;
-  -webkit-font-smoothing: antialiased;
+  body,
+  [data-slot="sidebar-inset"] {
+    background: #ffffff !important;
+  }
 }

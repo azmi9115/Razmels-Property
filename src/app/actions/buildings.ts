@@ -9,6 +9,7 @@ export async function createBuilding(formData: FormData) {
     const type = formData.get("type") as string
     const rent_price = Number(formData.get("rent_price"))
     const rent_period = formData.get("rent_period") as string
+    const description = ((formData.get("description") as string) || "").trim() || null
 
     if (!code || !type || !rent_price || !rent_period) {
       return { error: "Semua kolom wajib diisi" }
@@ -27,7 +28,8 @@ export async function createBuilding(formData: FormData) {
         code,
         type,
         rent_price,
-        rent_period
+        rent_period,
+        description
       }
     })
 
@@ -69,6 +71,7 @@ export async function updateBuilding(id: string, formData: FormData) {
     const type = formData.get("type") as string
     const rent_price = Number(formData.get("rent_price"))
     const rent_period = formData.get("rent_period") as string
+    const description = ((formData.get("description") as string) || "").trim() || null
 
     if (!code || !type || !rent_price || !rent_period) {
       return { error: "Semua kolom wajib diisi" }
@@ -88,7 +91,8 @@ export async function updateBuilding(id: string, formData: FormData) {
         code,
         type,
         rent_price,
-        rent_period
+        rent_period,
+        description
       }
     })
 

@@ -4,6 +4,31 @@ Catatan kronologis semua perubahan, penambahan fitur, dan pemeliharaan pada sist
 
 ---
 
+## 📅 Selasa, 13 Oktober 2026
+**Status:** Rombak total UI (branch `ui-overhaul`)
+
+### ✨ Ditambahkan (Added)
+- **Sistem desain baru** berbasis warna logo (navy + hijau), font Plus Jakarta Sans, dan **dark mode** (tombol di topbar).
+- **Pencarian cepat Ctrl+K**: lompat ke menu atau langsung cari penghuni/pembayaran.
+- **Dashboard baru**: kartu saldo kas, cincin okupansi, daftar "Perlu ditagih" dengan tombol pengingat WhatsApp, grafik arus kas, dan rincian kategori.
+- **Penghuni**: tab filter (telat, jatuh tempo ≤ 7 hari, aktif, keluar) dan tampilan kartu di HP.
+- **Bangunan & Kamar**: kartu per blok seperti peta unit.
+- **Monitoring**: heatmap dengan ikon dan skor ketepatan bayar per penghuni.
+- **Landing page** baru dengan peta unit & ketersediaan yang diambil langsung dari database (tanpa data penghuni).
+
+### 🔄 Diubah (Changed)
+- Login berbahasa Indonesia, tombol lihat password berfungsi, elemen palsu dihapus.
+- Grafik margin tidak lagi dual-axis; pie chart diganti bar list.
+- Format Rupiah & tanggal diseragamkan (tanpa desimal, "Rp 12,9 jt" di grafik).
+- Kuitansi dicetak dengan desain baru dan stempel LUNAS.
+
+### 🛠️ Diperbaiki (Fixed)
+- Menu sidebar tidak lagi "lompat" saat halaman dibuka (role dibaca di server).
+- Angka palsu "+4.3% dari bulan lalu" di dashboard diganti perhitungan asli.
+- Font tidak lagi diunduh dari Google saat build (mencegah build gagal di VPS).
+
+---
+
 ## 📅 Rabu, 24 Juni 2026
 **Status:** Penambahan Fitur & *Maintenance*
 

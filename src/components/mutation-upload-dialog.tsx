@@ -202,8 +202,8 @@ export function MutationUploadDialog({ activeTenants }: { activeTenants: Tenant[
 
   return (
     <Dialog open={open} onOpenChange={setOpen}>
-      <DialogTrigger render={<Button variant="outline" className="gap-2 bg-slate-50 hover:bg-slate-100 border-slate-200" />}>
-        <FileSpreadsheet className="h-4 w-4 text-emerald-600" />
+      <DialogTrigger render={<Button variant="outline" size="lg" className="gap-2" />}>
+        <FileSpreadsheet className="h-4 w-4 text-success" />
         Verifikasi Mutasi CSV (Beta)
       </DialogTrigger>
       <DialogContent className="sm:max-w-[700px] max-h-[85vh] flex flex-col">
@@ -213,9 +213,9 @@ export function MutationUploadDialog({ activeTenants }: { activeTenants: Tenant[
         
         {step === 1 && (
           <div className="flex flex-col gap-6 py-4">
-            <div className="bg-slate-50 p-4 rounded-lg border text-sm text-slate-600 space-y-2">
-              <p className="font-medium text-slate-900 flex items-center gap-2">
-                <Info className="h-4 w-4 text-blue-500" /> Cara Kerja Fitur Beta
+            <div className="bg-muted/60 p-4 rounded-xl border text-sm text-muted-foreground space-y-2">
+              <p className="font-medium text-foreground flex items-center gap-2">
+                <Info className="h-4 w-4 text-info" /> Cara Kerja Fitur Beta
               </p>
               <ul className="list-disc list-inside space-y-1 ml-1">
                 <li>Upload file mutasi berformat <b>.csv</b> (contoh: dari Internet Banking BRI).</li>
@@ -246,13 +246,13 @@ export function MutationUploadDialog({ activeTenants }: { activeTenants: Tenant[
 
         {step === 2 && (
           <div className="flex flex-col gap-4 py-4 flex-1 overflow-hidden">
-            <p className="text-sm text-slate-600">
+            <p className="text-sm text-muted-foreground">
               Ditemukan <b>{matchedMutations.length}</b> transaksi pemasukan. Centang transaksi yang benar-benar merupakan pembayaran sewa untuk diproses masuk ke buku kas.
             </p>
 
             <div className="overflow-y-auto border rounded-md">
               <table className="w-full text-sm text-left">
-                <thead className="bg-slate-50 sticky top-0 border-b">
+                <thead className="bg-muted sticky top-0 border-b">
                   <tr>
                     <th className="p-3 w-10">#</th>
                     <th className="p-3">Tanggal</th>
@@ -263,7 +263,7 @@ export function MutationUploadDialog({ activeTenants }: { activeTenants: Tenant[
                 </thead>
                 <tbody>
                   {matchedMutations.map((m) => (
-                    <tr key={m.id} className={`border-b last:border-0 ${m.selected ? 'bg-emerald-50/50' : ''}`}>
+                    <tr key={m.id} className={`border-b last:border-0 ${m.selected ? 'bg-success-soft' : ''}`}>
                       <td className="p-3">
                         <Checkbox 
                           checked={m.selected} 
@@ -273,7 +273,7 @@ export function MutationUploadDialog({ activeTenants }: { activeTenants: Tenant[
                       </td>
                       <td className="p-3 font-mono text-xs">{m.date}</td>
                       <td className="p-3 min-w-[300px] whitespace-normal break-words text-xs leading-relaxed" title={m.description}>{m.description}</td>
-                      <td className="p-3 font-semibold text-emerald-600">
+                      <td className="p-3 font-semibold text-success">
                         Rp {m.amount.toLocaleString("id-ID")}
                       </td>
                       <td className="p-3">
@@ -281,7 +281,7 @@ export function MutationUploadDialog({ activeTenants }: { activeTenants: Tenant[
                           value={m.matchedTenant?.id || ""} 
                           onValueChange={(val) => setManualTenant(m.id, val)}
                         >
-                          <SelectTrigger className={`w-[220px] h-9 text-xs ${m.matchedTenant ? 'border-emerald-200 text-emerald-700 bg-emerald-50' : 'text-slate-500'}`}>
+                          <SelectTrigger className={`w-[220px] h-9 text-xs ${m.matchedTenant ? 'border-success/40 text-success bg-success-soft' : 'text-muted-foreground'}`}>
                             <SelectValue placeholder="Pilih manual penghuni...">
                               {m.matchedTenant ? `${m.matchedTenant.name} (${m.matchedTenant.building?.code})` : "Pilih manual penghuni..."}
                             </SelectValue>
@@ -305,7 +305,7 @@ export function MutationUploadDialog({ activeTenants }: { activeTenants: Tenant[
               <Button variant="ghost" onClick={() => setStep(1)} disabled={loading}>
                 Batal / Upload Ulang
               </Button>
-              <Button onClick={submitBulk} disabled={loading} className="bg-emerald-600 hover:bg-emerald-700">
+              <Button onClick={submitBulk} disabled={loading} size="lg">
                 {loading ? <Loader2 className="mr-2 h-4 w-4 animate-spin" /> : null}
                 Proses {matchedMutations.filter(m => m.selected).length} Pembayaran
               </Button>

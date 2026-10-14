@@ -1,6 +1,7 @@
 "use client"
 
 import { useRouter, usePathname, useSearchParams } from "next/navigation"
+import { ChevronDown } from "lucide-react"
 
 export function SortSelect({ options }: { options: { label: string, value: string }[] }) {
   const searchParams = useSearchParams()
@@ -18,14 +19,18 @@ export function SortSelect({ options }: { options: { label: string, value: strin
   }
 
   return (
-    <select 
-      className="h-10 px-3 py-2 text-sm rounded-md border border-slate-200 bg-white text-slate-700 shadow-sm focus:outline-none focus:ring-2 focus:ring-primary/20 cursor-pointer"
-      value={currentSort}
-      onChange={handleSort}
-    >
-      {options.map(o => (
-        <option key={o.value} value={o.value}>{o.label}</option>
-      ))}
-    </select>
+    <div className="relative">
+      <select
+        aria-label="Urutkan"
+        className="h-9 cursor-pointer appearance-none rounded-lg border border-input bg-card pr-8 pl-3 text-sm font-medium shadow-xs outline-none focus-visible:border-ring focus-visible:ring-3 focus-visible:ring-ring/40"
+        value={currentSort}
+        onChange={handleSort}
+      >
+        {options.map(o => (
+          <option key={o.value} value={o.value}>{o.label}</option>
+        ))}
+      </select>
+      <ChevronDown className="pointer-events-none absolute top-1/2 right-2.5 size-4 -translate-y-1/2 text-muted-foreground" />
+    </div>
   )
 }

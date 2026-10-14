@@ -1,8 +1,13 @@
 "use client"
 
+import Link from "next/link"
+import { usePathname } from "next/navigation"
+import { signOut } from "next-auth/react"
+import { LogOut } from "lucide-react"
 import {
   Sidebar,
   SidebarContent,
+  SidebarFooter,
   SidebarGroup,
   SidebarGroupContent,
   SidebarGroupLabel,
@@ -10,106 +15,93 @@ import {
   SidebarMenu,
   SidebarMenuButton,
   SidebarMenuItem,
+  SidebarRail,
+  useSidebar,
 } from "@/components/ui/sidebar"
-import { Building, CreditCard, LayoutDashboard, Users, Wallet, LogOut, Shield, BarChart3 } from "lucide-react"
-import Link from "next/link"
-import { usePathname } from "next/navigation"
-import { useSession, signOut } from "next-auth/react"
-import { Button } from "@/components/ui/button"
+import { BrandMark, BrandWordmark } from "@/components/brand"
+import { isNavActive, navForRole } from "@/lib/nav"
+import { initials } from "@/lib/format"
 
-const ownerItems = [
-  { title: "Dashboard", url: "/dashboard", icon: LayoutDashboard },
-  { title: "Bangunan & Kamar", url: "/dashboard/buildings", icon: Building },
-  { title: "Daftar Penghuni", url: "/dashboard/tenants", icon: Users },
-  { title: "Pembayaran Sewa", url: "/dashboard/payments", icon: CreditCard },
-  { title: "Monitoring Sewa", url: "/dashboard/monitoring", icon: BarChart3 },
-  { title: "Cash Flow", url: "/dashboard/cashflow", icon: Wallet },
-]
+export type SessionUser = {
+  name: string
+  email: string
+  role: string
+}
 
-const adminItems = [
-  { title: "Bangunan & Kamar", url: "/dashboard/buildings", icon: Building },
-  { title: "Daftar Penghuni", url: "/dashboard/tenants", icon: Users },
-  { title: "Pembayaran Sewa", url: "/dashboard/payments", icon: CreditCard },
-]
-
-export function AppSidebar() {
+// Role dikirim dari server (layout), jadi menu langsung lengkap tanpa "lompat" saat sesi dimuat
+export function AppSidebar({ user }: { user: SessionUser }) {
   const pathname = usePathname()
-  const { data: session } = useSession()
-
-  const role = (session?.user as any)?.role
-  const isOwner = role === "OWNER"
-  const items = isOwner ? ownerItems : adminItems
+  const { setOpenMobile } = useSidebar()
+  const groups = navForRole(user.role)
+  const isOwner = user.role === "OWNER"
 
   return (
-    <Sidebar>
-      <SidebarHeader className="p-4 border-b">
-        <div className="flex items-center gap-2">
-          <div className="flex h-8 w-8 items-center justify-center rounded-lg bg-primary text-primary-foreground">
-            <Building className="h-5 w-5" />
-          </div>
-          <h2 className="text-lg font-bold text-primary tracking-tight">Razmel's Property</h2>
-        </div>
+    <Sidebar collapsible="icon" className="border-r-0">
+      <SidebarHeader className="px-3 pt-4 pb-2">
+        <Link
+          href={isOwner ? "/dashboard" : "/dashboard/tenants"}
+          onClick={() => setOpenMobile(false)}
+          className="flex items-center gap-3 rounded-xl px-1 py-1 text-white outline-none focus-visible:ring-2 focus-visible:ring-sidebar-ring group-data-[collapsible=icon]:justify-center group-data-[collapsible=icon]:px-0"
+        >
+          <BrandMark className="size-9 bg-white/5" />
+          <BrandWordmark className="group-data-[collapsible=icon]:hidden" />
+        </Link>
       </SidebarHeader>
-      <SidebarContent>
-        <SidebarGroup>
-          <SidebarGroupLabel className="text-xs uppercase tracking-wider text-muted-foreground mt-4">Menu Utama</SidebarGroupLabel>
-          <SidebarGroupContent>
-            <SidebarMenu className="gap-2">
-              {items.map((item) => {
-                const isActive = pathname === item.url || (pathname.startsWith(`${item.url}/`) && item.url !== "/dashboard")
-                return (
-                  <SidebarMenuItem key={item.title}>
-                    <SidebarMenuButton render={<Link href={item.url} />} isActive={isActive} className="transition-all hover:bg-slate-100">
-                      <item.icon className="h-5 w-5" />
-                      <span>{item.title}</span>
-                    </SidebarMenuButton>
-                  </SidebarMenuItem>
-                )
-              })}
-            </SidebarMenu>
-          </SidebarGroupContent>
-        </SidebarGroup>
 
-        {/* Owner-only section */}
-        {isOwner && (
-          <SidebarGroup>
-            <SidebarGroupLabel className="text-xs uppercase tracking-wider text-muted-foreground mt-2">Administrasi</SidebarGroupLabel>
+      <SidebarContent className="px-1 pt-2">
+        {groups.map((group) => (
+          <SidebarGroup key={group.label} className="py-1.5">
+            <SidebarGroupLabel className="h-7 px-3 text-[10.5px] font-semibold tracking-[0.12em] text-sidebar-foreground/50 uppercase">
+              {group.label}
+            </SidebarGroupLabel>
             <SidebarGroupContent>
-              <SidebarMenu className="gap-2">
-                <SidebarMenuItem>
-                  <SidebarMenuButton
-                    render={<Link href="/dashboard/users" />}
-                    isActive={pathname === "/dashboard/users" || pathname.startsWith("/dashboard/users/")}
-                    className="transition-all hover:bg-slate-100"
-                  >
-                    <Shield className="h-5 w-5" />
-                    <span>Manajemen Staf</span>
-                  </SidebarMenuButton>
-                </SidebarMenuItem>
+              <SidebarMenu className="gap-0.5">
+                {group.items.map((item) => {
+                  const active = isNavActive(pathname, item.url)
+                  return (
+                    <SidebarMenuItem key={item.url}>
+                      <SidebarMenuButton
+                        render={<Link href={item.url} onClick={() => setOpenMobile(false)} />}
+                        isActive={active}
+                        tooltip={item.title}
+                        className="relative h-10 gap-3 rounded-lg px-3 text-[13.5px] font-medium text-sidebar-foreground transition-colors hover:bg-sidebar-accent hover:text-white data-active:bg-gradient-to-r data-active:from-emerald-400/15 data-active:to-emerald-400/0 data-active:text-white [&_svg]:size-[18px]"
+                      >
+                        {active && (
+                          <span className="absolute inset-y-2 left-0 w-[3px] rounded-r-full bg-sidebar-primary shadow-[0_0_12px_var(--sidebar-primary)] group-data-[collapsible=icon]:hidden" />
+                        )}
+                        <item.icon className={active ? "text-sidebar-primary" : "opacity-80"} />
+                        <span>{item.title}</span>
+                      </SidebarMenuButton>
+                    </SidebarMenuItem>
+                  )
+                })}
               </SidebarMenu>
             </SidebarGroupContent>
           </SidebarGroup>
-        )}
+        ))}
       </SidebarContent>
-      {session && (
-        <div className="p-4 border-t mt-auto space-y-4">
-          <div className="flex items-center gap-3 px-2">
-            <div className="h-9 w-9 rounded-full bg-slate-200 flex items-center justify-center font-bold text-slate-600">
-              {session.user?.name?.charAt(0).toUpperCase() || "A"}
-            </div>
-            <div className="flex flex-col">
-              <span className="text-sm font-semibold leading-none">{session.user?.name}</span>
-              <span className="text-xs text-muted-foreground mt-1">
-                {isOwner ? "Owner" : "Admin"}
-              </span>
-            </div>
+
+      <SidebarFooter className="p-3">
+        <div className="flex items-center gap-3 rounded-xl border border-sidebar-border bg-white/[0.03] p-2.5 group-data-[collapsible=icon]:justify-center group-data-[collapsible=icon]:border-0 group-data-[collapsible=icon]:bg-transparent group-data-[collapsible=icon]:p-0">
+          <span className="flex size-9 shrink-0 items-center justify-center rounded-lg bg-gradient-to-br from-emerald-400 to-teal-600 text-xs font-bold text-emerald-950">
+            {initials(user.name)}
+          </span>
+          <div className="min-w-0 flex-1 group-data-[collapsible=icon]:hidden">
+            <p className="truncate text-sm font-semibold text-white">{user.name}</p>
+            <p className="truncate text-xs text-sidebar-foreground/70">{isOwner ? "Owner" : "Admin"}</p>
           </div>
-          <Button variant="outline" className="w-full justify-start text-red-600 hover:text-red-700 hover:bg-red-50" onClick={() => signOut()}>
-            <LogOut className="mr-2 h-4 w-4" />
-            Keluar (Logout)
-          </Button>
+          <button
+            type="button"
+            onClick={() => signOut({ callbackUrl: "/login" })}
+            title="Keluar"
+            aria-label="Keluar"
+            className="flex size-8 shrink-0 items-center justify-center rounded-lg text-sidebar-foreground transition-colors hover:bg-red-500/15 hover:text-red-300 group-data-[collapsible=icon]:hidden"
+          >
+            <LogOut className="size-4" />
+          </button>
         </div>
-      )}
+      </SidebarFooter>
+      <SidebarRail />
     </Sidebar>
   )
 }

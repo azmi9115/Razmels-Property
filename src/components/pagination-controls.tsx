@@ -37,14 +37,14 @@ export function PaginationControls({ totalPages, currentPage }: { totalPages: nu
 
     return pages.map((p, idx) => {
       if (p === '...') {
-        return <span key={`ellipsis-${idx}`} className="px-2 text-slate-400">...</span>
+        return <span key={`ellipsis-${idx}`} className="px-1.5 text-muted-foreground">…</span>
       }
       return (
         <Button
           key={p}
           variant={currentPage === p ? "default" : "outline"}
           size="sm"
-          className={`w-9 h-9 p-0 ${currentPage === p ? 'pointer-events-none' : ''}`}
+          className={`size-8 p-0 tabular-nums ${currentPage === p ? 'pointer-events-none' : ''}`}
           onClick={() => handlePageChange(p as number)}
         >
           {p}
@@ -54,9 +54,9 @@ export function PaginationControls({ totalPages, currentPage }: { totalPages: nu
   }
 
   return (
-    <div className="flex items-center justify-between px-2 py-4">
-      <div className="text-sm text-slate-500 hidden sm:block">
-        Menampilkan halaman <span className="font-bold">{currentPage}</span> dari <span className="font-bold">{totalPages}</span>
+    <div className="flex items-center justify-between gap-3 border-t px-4 py-3">
+      <div className="hidden text-[13px] text-muted-foreground sm:block">
+        Halaman <span className="font-semibold text-foreground">{currentPage}</span> dari <span className="font-semibold text-foreground">{totalPages}</span>
       </div>
       <div className="flex items-center gap-2 w-full sm:w-auto justify-between sm:justify-end">
         <Button

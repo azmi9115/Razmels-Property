@@ -5,6 +5,8 @@ import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle } f
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
 import { Label } from "@/components/ui/label"
+import { Textarea } from "@/components/ui/textarea"
+import { BUILDING_TYPES } from "@/lib/building-types"
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select"
 import { updateBuilding } from "@/app/actions/buildings"
 import { toast } from "sonner"
@@ -14,7 +16,7 @@ export function EditBuildingDialog({
   open, 
   onOpenChange 
 }: { 
-  building: { id: string, code: string, type: string, rent_price: number, rent_period: string },
+  building: { id: string, code: string, type: string, rent_price: number, rent_period: string, description?: string | null },
   open: boolean,
   onOpenChange: (open: boolean) => void
 }) {
@@ -27,6 +29,11 @@ export function EditBuildingDialog({
     }
   }, [open, building])
 
+  // Tipe lama yang tidak ada di daftar (misal "Kosan") tetap bisa dipilih supaya tidak hilang saat edit
+  const typeOptions: string[] = BUILDING_TYPES.includes(defaultValues.type as (typeof BUILDING_TYPES)[number])
+    ? [...BUILDING_TYPES]
+    : [...BUILDING_TYPES, defaultValues.type]
+
   async function handleSubmit(formData: FormData) {
     setLoading(true)
     const result = await updateBuilding(building.id, formData)
@@ -35,7 +42,7 @@ export function EditBuildingDialog({
     if (result.error) {
       toast.error(result.error)
     } else {
-      toast.success("Kamar berhasil diperbarui!")
+      toast.success("Unit berhasil diperbarui!")
       onOpenChange(false)
     }
   }
@@ -44,14 +51,14 @@ export function EditBuildingDialog({
     <Dialog open={open} onOpenChange={onOpenChange}>
       <DialogContent className="sm:max-w-[425px]">
         <DialogHeader>
-          <DialogTitle>Edit Kamar / Properti</DialogTitle>
+          <DialogTitle>Edit Unit</DialogTitle>
           <DialogDescription>
             Ubah data properti. Klik simpan setelah selesai.
           </DialogDescription>
         </DialogHeader>
         <form action={handleSubmit} className="space-y-4 pt-4">
           <div className="space-y-2">
-            <Label htmlFor="code">Kode Kamar</Label>
+            <Label htmlFor="code">Kode / Nama Unit</Label>
             <Input id="code" name="code" defaultValue={defaultValues.code} required />
           </div>
           <div className="space-y-2">
@@ -61,8 +68,9 @@ export function EditBuildingDialog({
                 <SelectValue placeholder="Pilih Tipe" />
               </SelectTrigger>
               <SelectContent>
-                <SelectItem value="Kosan">Kosan</SelectItem>
-                <SelectItem value="Kontrakan">Kontrakan</SelectItem>
+                {typeOptions.map((t) => (
+                  <SelectItem key={t} value={t}>{t}</SelectItem>
+                ))}
               </SelectContent>
             </Select>
           </div>
@@ -82,6 +90,11 @@ export function EditBuildingDialog({
                 <SelectItem value="Tahunan">Tahunan</SelectItem>
               </SelectContent>
             </Select>
+          </div>
+          <div className="space-y-2">
+            <Label htmlFor="description">Keterangan <span className="font-normal text-muted-foreground">(opsional)</span></Label>
+            <Textarea id="description" name="description" defaultValue={defaultValues.description ?? ""} rows={2} placeholder="Misal: Daan Mogot, Jakarta Barat. Sudah termasuk IPL dan parkir." />
+            <p className="text-xs text-muted-foreground">Tampil di halaman depan untuk calon penyewa.</p>
           </div>
           <div className="flex justify-end pt-4">
             <Button type="button" variant="outline" className="mr-2" onClick={() => onOpenChange(false)}>

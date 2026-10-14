@@ -1,8 +1,11 @@
 import prisma from "@/lib/prisma"
 import { notFound } from "next/navigation"
-import { ArrowLeft } from "lucide-react"
+import { ArrowLeft, BadgeCheck } from "lucide-react"
 import Link from "next/link"
 import { PrintButton } from "@/components/print-button"
+import { buttonVariants } from "@/components/ui/button"
+import { BrandMark } from "@/components/brand"
+import { formatDateLong, formatRupiah, isBlank } from "@/lib/format"
 
 export default async function InvoicePage({ params }: { params: Promise<{ id: string }> }) {
   const { id } = await params;
@@ -18,98 +21,92 @@ export default async function InvoicePage({ params }: { params: Promise<{ id: st
 
   if (!payment) return notFound()
 
-  const tDate = new Date(payment.transfer_date).toLocaleDateString("id-ID", {
-    day: "numeric", month: "long", year: "numeric"
-  })
-  
-  const eDate = new Date(payment.rent_end_date).toLocaleDateString("id-ID", {
-    day: "numeric", month: "long", year: "numeric"
-  })
+  const tDate = formatDateLong(payment.transfer_date)
+  const eDate = formatDateLong(payment.rent_end_date)
+  const refNo = `INV-${payment.id.split('-')[0].toUpperCase()}`
 
   return (
-    <div className="min-h-screen bg-slate-100 p-4 sm:p-8 font-sans print:bg-white print:p-0">
-      <div className="max-w-3xl mx-auto space-y-6 print:space-y-0">
-        
-        {/* Kontrol (Sembunyikan saat di-print) */}
-        <div className="flex items-center justify-between print:hidden mb-6">
-          <Link href="/dashboard/payments" className="text-slate-600 hover:text-slate-900 flex items-center gap-2 font-medium bg-white px-4 py-2 rounded-lg shadow-sm border border-slate-200">
-            <ArrowLeft className="h-4 w-4" /> Kembali
-          </Link>
-          <PrintButton />
-        </div>
+    <div className="mx-auto max-w-3xl space-y-6 print:max-w-none">
+      <div className="no-print flex items-center justify-between">
+        <Link href="/dashboard/payments" className={buttonVariants({ variant: "outline", size: "lg" })}>
+          <ArrowLeft className="size-4" /> Kembali
+        </Link>
+        <PrintButton />
+      </div>
 
-        {/* Kertas Invoice */}
-        <div className="bg-white p-8 sm:p-12 shadow-md rounded-xl border border-slate-200 print:shadow-none print:border-none print:p-0">
-          {/* Header */}
-          <div className="flex justify-between items-start border-b border-slate-200 pb-8 mb-8">
-            <div>
-              <h1 className="text-3xl font-bold text-slate-800 tracking-tight">INVOICE SEWA</h1>
-              <p className="text-slate-500 mt-1 font-medium">Razmels Property Management</p>
+      {/* Kertas kuitansi — selalu terang, juga saat dark mode */}
+      <article className="relative overflow-hidden rounded-2xl bg-white text-slate-900 shadow-xl ring-1 ring-slate-200 print:rounded-none print:shadow-none print:ring-0">
+        <div className="h-2 bg-gradient-to-r from-emerald-400 via-emerald-500 to-indigo-500" />
+
+        <div className="p-8 sm:p-12">
+          <header className="flex flex-col justify-between gap-6 border-b border-slate-200 pb-8 sm:flex-row sm:items-start">
+            <div className="flex items-center gap-4">
+              <BrandMark className="size-14 rounded-2xl" />
+              <div>
+                <p className="text-lg font-bold tracking-tight">Razmel&apos;s Property</p>
+                <p className="text-sm text-slate-500">Kuitansi pembayaran sewa</p>
+              </div>
             </div>
-            <div className="text-right">
-              <p className="text-xs font-bold text-slate-400 tracking-wider mb-1">NO. REFERENSI</p>
-              <p className="text-lg font-bold text-slate-800">INV-{payment.id.split('-')[0].toUpperCase()}</p>
-              <p className="text-sm text-slate-500 mt-2">Tanggal: {tDate}</p>
+            <div className="sm:text-right">
+              <p className="text-[11px] font-semibold tracking-[0.12em] text-slate-400 uppercase">No. referensi</p>
+              <p className="font-mono text-lg font-bold">{refNo}</p>
+              <p className="mt-1 text-sm text-slate-500">{tDate}</p>
+            </div>
+          </header>
+
+          <div className="grid gap-8 py-8 sm:grid-cols-2">
+            <div>
+              <p className="mb-2 text-[11px] font-semibold tracking-[0.12em] text-slate-400 uppercase">Diterima dari</p>
+              <p className="text-lg font-bold">{payment.tenant.name}</p>
+              {!isBlank(payment.tenant.nik) && <p className="mt-1 text-sm text-slate-600">NIK {payment.tenant.nik}</p>}
+              {!isBlank(payment.tenant.phone_1) && <p className="text-sm text-slate-600">HP {payment.tenant.phone_1}</p>}
+            </div>
+            <div className="sm:text-right">
+              <p className="mb-2 text-[11px] font-semibold tracking-[0.12em] text-slate-400 uppercase">Unit</p>
+              <p className="font-mono text-lg font-bold">{payment.tenant.building?.code || "—"}</p>
+              <p className="mt-1 text-sm text-slate-600">{payment.tenant.building?.type || "—"}</p>
             </div>
           </div>
 
-          {/* Info Penghuni */}
-          <div className="grid grid-cols-2 gap-8 mb-8">
-            <div>
-              <p className="text-xs font-bold text-slate-400 tracking-wider mb-2">DITAGIHKAN KEPADA</p>
-              <p className="text-lg font-bold text-slate-800">{payment.tenant.name}</p>
-              <p className="text-slate-600 mt-1">NIK: {payment.tenant.nik}</p>
-              <p className="text-slate-600">HP: {payment.tenant.phone_1}</p>
-            </div>
-            <div className="text-right">
-              <p className="text-xs font-bold text-slate-400 tracking-wider mb-2">DETAIL KAMAR</p>
-              <p className="text-lg font-bold text-slate-800">
-                Kamar {payment.tenant.building?.code || "-"}
-              </p>
-              <p className="text-slate-600 mt-1">Tipe: {payment.tenant.building?.type || "-"}</p>
-            </div>
-          </div>
-
-          {/* Tabel Detail */}
-          <table className="w-full text-left border-collapse mb-8">
+          <table className="w-full border-collapse text-left">
             <thead>
-              <tr className="border-y-2 border-slate-200 text-sm">
-                <th className="py-3 font-bold text-slate-600 tracking-wider">DESKRIPSI</th>
-                <th className="py-3 font-bold text-slate-600 tracking-wider text-center">DURASI</th>
-                <th className="py-3 font-bold text-slate-600 tracking-wider text-right">TOTAL</th>
+              <tr className="border-y border-slate-200 text-[11px] tracking-[0.1em] text-slate-500 uppercase">
+                <th className="py-3 font-semibold">Deskripsi</th>
+                <th className="py-3 text-center font-semibold">Durasi</th>
+                <th className="py-3 text-right font-semibold">Jumlah</th>
               </tr>
             </thead>
             <tbody>
               <tr className="border-b border-slate-100">
-                <td className="py-4 text-slate-800">
-                  <p className="font-semibold text-base">Pembayaran Sewa Properti</p>
-                  <p className="text-sm text-slate-500 mt-1">Berlaku s/d {eDate}</p>
+                <td className="py-5">
+                  <p className="font-semibold">Sewa unit {payment.tenant.building?.code}</p>
+                  <p className="mt-1 text-sm text-slate-500">Berlaku sampai {eDate}</p>
                 </td>
-                <td className="py-4 text-center text-slate-800 font-medium">{payment.rent_duration_months} Bulan</td>
-                <td className="py-4 text-right font-bold text-slate-800 text-lg">
-                  Rp {payment.amount.toLocaleString("id-ID")}
-                </td>
+                <td className="py-5 text-center font-medium">{payment.rent_duration_months} bulan</td>
+                <td className="py-5 text-right font-semibold tabular-nums">{formatRupiah(payment.amount)}</td>
               </tr>
             </tbody>
           </table>
 
-          {/* Total */}
-          <div className="flex justify-end mb-16">
-            <div className="w-72">
-              <div className="flex justify-between py-3 border-t-2 border-slate-800">
-                <span className="font-bold text-slate-800 tracking-wider text-sm">TOTAL LUNAS</span>
-                <span className="font-bold text-emerald-600 text-xl">Rp {payment.amount.toLocaleString("id-ID")}</span>
+          <div className="mt-8 flex flex-col-reverse items-start justify-between gap-6 sm:flex-row sm:items-end">
+            <div className="flex -rotate-6 items-center gap-2 rounded-xl border-2 border-emerald-500 px-4 py-2 text-emerald-600">
+              <BadgeCheck className="size-6" />
+              <span className="text-xl font-extrabold tracking-[0.2em]">LUNAS</span>
+            </div>
+            <div className="w-full rounded-xl bg-slate-50 p-5 sm:w-72">
+              <div className="flex items-center justify-between">
+                <span className="text-sm font-semibold text-slate-500">Total dibayar</span>
+                <span className="text-2xl font-bold text-emerald-600 tabular-nums">{formatRupiah(payment.amount)}</span>
               </div>
             </div>
           </div>
 
-          {/* Footer / Tanda Tangan */}
-          <div className="mt-16 text-center text-slate-400 text-sm border-t border-slate-100 pt-8">
-            <p>Terima kasih telah mempercayakan hunian Anda kepada Razmels Property.</p>
-            <p className="mt-1">Invoice ini sah dan di-generate otomatis oleh sistem.</p>
-          </div>
+          <footer className="mt-12 border-t border-slate-100 pt-6 text-center text-sm text-slate-400">
+            <p>Terima kasih telah mempercayakan hunian Anda kepada Razmel&apos;s Property.</p>
+            <p className="mt-1">Kuitansi ini sah dan dibuat otomatis oleh sistem.</p>
+          </footer>
         </div>
-      </div>
+      </article>
     </div>
   )
 }

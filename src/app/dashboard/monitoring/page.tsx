@@ -1,11 +1,14 @@
 import prisma from "@/lib/prisma"
-import { MonitoringGrid } from "@/components/monitoring-grid"
-import { BarChart3 } from "lucide-react"
+import { CheckCircle2, Clock3, XCircle } from "lucide-react"
+import { MonitoringGrid, MonitoringLegend } from "@/components/monitoring-grid"
+import { PageHeader } from "@/components/page-header"
+import { StatCard } from "@/components/stat-card"
+import { formatMonthShort } from "@/lib/format"
 
 export const dynamic = "force-dynamic";
 
 export const metadata = {
-  title: "Monitoring Sewa — Razmel's Property",
+  title: "Monitoring Sewa",
   description: "Pantau status pembayaran sewa seluruh penghuni per bulan."
 }
 
@@ -32,7 +35,7 @@ export default async function MonitoringPage() {
     d.setDate(1)
     d.setMonth(d.getMonth() - i)
     months.push({
-      label: d.toLocaleDateString("id-ID", { month: "short", year: "2-digit" }),
+      label: formatMonthShort(d.getFullYear(), d.getMonth()),
       year: d.getFullYear(),
       month: d.getMonth() // 0-indexed
     })
@@ -149,35 +152,21 @@ export default async function MonitoringPage() {
     }
   })
 
+  const countNow = (status: string) => rows.filter((r) => r.currentStatus === status).length
+
   return (
-    <div className="space-y-6 animate-in fade-in slide-in-from-bottom-4 duration-700 ease-out">
-      <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4">
-        <div>
-          <div className="flex items-center gap-3 mb-1">
-            <div className="h-9 w-9 bg-indigo-100 rounded-xl flex items-center justify-center text-indigo-600">
-              <BarChart3 className="h-5 w-5" />
-            </div>
-            <h2 className="text-3xl font-extrabold tracking-tight text-slate-800">Monitoring Sewa</h2>
-          </div>
-          <p className="text-muted-foreground mt-1 text-base">
-            Status pembayaran sewa seluruh penghuni aktif per bulan.
-          </p>
-        </div>
-        {/* Legend */}
-        <div className="flex flex-wrap gap-2 text-xs font-medium">
-          <span className="flex items-center gap-1.5 bg-emerald-100 text-emerald-700 px-2.5 py-1 rounded-full">
-            <span className="w-2 h-2 rounded-full bg-emerald-500 inline-block" /> TEPAT
-          </span>
-          <span className="flex items-center gap-1.5 bg-amber-100 text-amber-700 px-2.5 py-1 rounded-full">
-            <span className="w-2 h-2 rounded-full bg-amber-500 inline-block" /> TELAT
-          </span>
-          <span className="flex items-center gap-1.5 bg-red-100 text-red-700 px-2.5 py-1 rounded-full">
-            <span className="w-2 h-2 rounded-full bg-red-500 inline-block" /> BELUM BAYAR
-          </span>
-          <span className="flex items-center gap-1.5 bg-slate-100 text-slate-500 px-2.5 py-1 rounded-full">
-            <span className="w-2 h-2 rounded-full bg-slate-400 inline-block" /> KOSONG
-          </span>
-        </div>
+    <div className="space-y-6 animate-in fade-in slide-in-from-bottom-2 duration-300">
+      <PageHeader
+        eyebrow="Ringkasan"
+        title="Monitoring Sewa"
+        description="Riwayat ketepatan bayar setiap penghuni aktif selama 11 bulan terakhir."
+        actions={<MonitoringLegend />}
+      />
+
+      <div className="grid gap-4 sm:grid-cols-3">
+        <StatCard label="Tepat waktu bulan ini" icon={CheckCircle2} tone="success" value={countNow("TEPAT")} hint="Sudah bayar sebelum batas 7 hari" />
+        <StatCard label="Telat bulan ini" icon={Clock3} tone="warning" value={countNow("TELAT")} hint="Bayar lewat dari 7 hari" />
+        <StatCard label="Belum bayar" icon={XCircle} tone={countNow("BELUM BAYAR") > 0 ? "danger" : "neutral"} value={countNow("BELUM BAYAR")} hint="Sudah lewat tanggal jatuh tempo" />
       </div>
 
       <MonitoringGrid rows={rows} months={months.map(m => m.label)} />

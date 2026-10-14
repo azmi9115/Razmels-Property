@@ -1,521 +1,445 @@
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card"
-import { Building2, Users, Wallet, TrendingUp, TrendingDown, ArrowRight, AlertCircle, ArrowUpRight, ArrowDownRight, Building, FileSpreadsheet, Landmark, PieChart, CalendarOff } from "lucide-react"
+import Link from "next/link"
+import {
+  AlarmClock,
+  ArrowDownRight,
+  ArrowRight,
+  ArrowUpRight,
+  BedDouble,
+  CircleAlert,
+  FileSpreadsheet,
+  HandCoins,
+  HeartHandshake,
+  MessageCircle,
+  Plus,
+  Sparkles,
+  Target,
+  TrendingUp,
+} from "lucide-react"
 import prisma from "@/lib/prisma"
-import { CashflowChart } from "@/components/cashflow-chart"
-import { CategoryPieChart } from "@/components/category-pie-chart"
+import { getServerSession } from "next-auth"
+import { authOptions } from "@/lib/auth"
+import { PageHeader } from "@/components/page-header"
+import { Panel } from "@/components/panel"
+import { StatCard } from "@/components/stat-card"
+import { StatusPill } from "@/components/status-pill"
+import { EmptyState } from "@/components/empty-state"
+import { BreakdownList } from "@/components/breakdown-list"
+import { OccupancyRing } from "@/components/occupancy-ring"
+import { CashflowChart, CashflowLegend } from "@/components/cashflow-chart"
+import { buttonVariants } from "@/components/ui/button"
+import { dueLabel, getDueInfo, startOfToday } from "@/lib/rent"
+import {
+  formatMonthShort,
+  formatPercent,
+  formatRupiah,
+  formatRupiahCompact,
+  initials,
+  whatsappLink,
+} from "@/lib/format"
+import { cn } from "@/lib/utils"
 
-export const dynamic = "force-dynamic";
+export const dynamic = "force-dynamic"
 
-// Next.js App Router mengizinkan kita melakukan await langsung di komponen
+const TZ = "Asia/Jakarta"
+
+function greeting(): string {
+  const hour = Number(new Intl.DateTimeFormat("en-GB", { hour: "numeric", hour12: false, timeZone: TZ }).format(new Date()))
+  if (hour < 11) return "Selamat pagi"
+  if (hour < 15) return "Selamat siang"
+  if (hour < 18) return "Selamat sore"
+  return "Selamat malam"
+}
+
+function sumWhere<T extends { amount: number }>(rows: T[], pred: (row: T) => boolean) {
+  return rows.reduce((acc, r) => (pred(r) ? acc + r.amount : acc), 0)
+}
+
 export default async function DashboardPage() {
-  // Mengambil data dari SQLite melalui Prisma
-  const activeTenants = await prisma.tenant.count({
-    where: { status: "Active" }
-  });
+  const session = await getServerSession(authOptions)
+  const firstName = (session?.user?.name ?? "").split(" ")[0] || "Admin"
 
-  const allBuildings = await prisma.building.findMany();
-  const totalBuildings = allBuildings.length;
-  const occupancyRate = totalBuildings > 0 ? (activeTenants / totalBuildings) * 100 : 0;
-  const totalPotensiKotor = allBuildings.reduce((acc, curr) => acc + curr.rent_price, 0);
+  const [allBuildings, cashflows, activeTenantRows] = await Promise.all([
+    prisma.building.findMany(),
+    prisma.cashflow.findMany({ orderBy: { transaction_date: "asc" } }),
+    prisma.tenant.findMany({
+      where: { status: "Active" },
+      include: { building: true, payments: { orderBy: { rent_end_date: "desc" }, take: 1 } },
+    }),
+  ])
 
-  const cashflows = await prisma.cashflow.findMany();
+  // ── Okupansi ───────────────────────────────────────────────
+  const totalBuildings = allBuildings.length
+  const activeTenants = activeTenantRows.length
+  const kamarKosong = Math.max(0, totalBuildings - activeTenants)
+  const totalPotensiKotor = allBuildings.reduce((acc, b) => acc + b.rent_price, 0)
 
-  const income = cashflows.filter(c => c.type === "Pemasukan").reduce((acc, curr) => acc + curr.amount, 0)
-  const expense = cashflows.filter(c => c.type === "Pengeluaran").reduce((acc, curr) => acc + curr.amount, 0)
-  const saldoAkhir = income - expense;
-  const profitMargin = income > 0 ? (saldoAkhir / income) * 100 : 0;
+  // ── Keuangan ───────────────────────────────────────────────
+  const isIncome = (c: { type: string }) => c.type === "Pemasukan"
+  const isExpense = (c: { type: string }) => c.type === "Pengeluaran"
+  const income = sumWhere(cashflows, isIncome)
+  const expense = sumWhere(cashflows, isExpense)
+  const saldoAkhir = income - expense
+  const profitMargin = income > 0 ? (saldoAkhir / income) * 100 : 0
 
-  const currentMonth = new Date().getMonth();
-  const currentYear = new Date().getFullYear();
-  const lastMonth = currentMonth === 0 ? 11 : currentMonth - 1;
-  const lastMonthYear = currentMonth === 0 ? currentYear - 1 : currentYear;
-
-  const incomeThisMonth = cashflows
-    .filter(c => c.type === "Pemasukan" && new Date(c.transaction_date).getMonth() === currentMonth && new Date(c.transaction_date).getFullYear() === currentYear)
-    .reduce((acc, curr) => acc + curr.amount, 0);
-
-  const incomeLastMonth = cashflows
-    .filter(c => c.type === "Pemasukan" && new Date(c.transaction_date).getMonth() === lastMonth && new Date(c.transaction_date).getFullYear() === lastMonthYear)
-    .reduce((acc, curr) => acc + curr.amount, 0);
-
-  const incomeDiff = incomeThisMonth - incomeLastMonth;
-
-
-  // Hitung data untuk grafik (6 bulan terakhir)
-  const sixMonthsAgo = new Date()
-  sixMonthsAgo.setMonth(sixMonthsAgo.getMonth() - 5)
-  sixMonthsAgo.setDate(1)
-
-  const allCashflows = await prisma.cashflow.findMany({
-    where: { transaction_date: { gte: sixMonthsAgo } },
-    orderBy: { transaction_date: "asc" }
-  })
-
-  const monthlyDataMap = new Map<string, { month: string, Pemasukan: number, Pengeluaran: number }>()
-  const incomeCategoryMap = new Map<string, number>()
-  const expenseCategoryMap = new Map<string, number>()
-
-  // Inisialisasi 6 bulan terakhir
-  for (let i = 5; i >= 0; i--) {
-    const d = new Date()
-    d.setMonth(d.getMonth() - i)
-    const m = d.getMonth()
-    const y = d.getFullYear()
-    const monthNames = ["Jan", "Feb", "Mar", "Apr", "Mei", "Jun", "Jul", "Ags", "Sep", "Okt", "Nov", "Des"];
-    const monthStr = `${monthNames[m]} ${y.toString().slice(-2)}`;
-    monthlyDataMap.set(`${y}-${m}`, { month: monthStr, Pemasukan: 0, Pengeluaran: 0 })
+  const now = new Date()
+  const inMonth = (d: Date, offset: number) => {
+    const ref = new Date(now.getFullYear(), now.getMonth() - offset, 1)
+    const date = new Date(d)
+    return date.getMonth() === ref.getMonth() && date.getFullYear() === ref.getFullYear()
   }
+  const incomeThisMonth = sumWhere(cashflows, (c) => isIncome(c) && inMonth(c.transaction_date, 0))
+  const incomeLastMonth = sumWhere(cashflows, (c) => isIncome(c) && inMonth(c.transaction_date, 1))
+  const expenseThisMonth = sumWhere(cashflows, (c) => isExpense(c) && inMonth(c.transaction_date, 0))
+  const expenseLastMonth = sumWhere(cashflows, (c) => isExpense(c) && inMonth(c.transaction_date, 1))
 
-  allCashflows.forEach(cf => {
-    // Line chart data
-    const d = new Date(cf.transaction_date);
-    const m = d.getMonth();
-    const y = d.getFullYear();
-    const key = `${y}-${m}`;
-
-    if (monthlyDataMap.has(key)) {
-      const data = monthlyDataMap.get(key)!
-      if (cf.type === "Pemasukan") data.Pemasukan += cf.amount
-      else data.Pengeluaran += cf.amount
-    }
-
-    // Pie chart data
-    if (cf.type === "Pemasukan") {
-      incomeCategoryMap.set(cf.category, (incomeCategoryMap.get(cf.category) || 0) + cf.amount)
-    } else {
-      expenseCategoryMap.set(cf.category, (expenseCategoryMap.get(cf.category) || 0) + cf.amount)
-    }
-  })
-
-  const chartData = Array.from(monthlyDataMap.values())
-
-  // Data for Chart 1: Income vs Expense (All Time)
-  const incomeVsExpensePieData = [
-    { name: "Total Pemasukan", value: income },
-    { name: "Total Pengeluaran", value: expense }
-  ];
-
-  // Data for Chart 2: Expense by Category (All Time)
-  const allTimeExpenseCategoryMap = new Map<string, number>()
-  const allTimeIncomeCategoryMap = new Map<string, number>()
-
-  cashflows.forEach(cf => {
-    if (cf.type === "Pengeluaran") {
-      allTimeExpenseCategoryMap.set(cf.category, (allTimeExpenseCategoryMap.get(cf.category) || 0) + cf.amount)
-    } else if (cf.type === "Pemasukan") {
-      allTimeIncomeCategoryMap.set(cf.category, (allTimeIncomeCategoryMap.get(cf.category) || 0) + cf.amount)
-    }
-  })
-
-  const allTimeExpensePieData = Array.from(allTimeExpenseCategoryMap.entries())
-    .map(([name, value]) => ({ name, value }))
-    .sort((a, b) => b.value - a.value)
-
-  const allTimeIncomePieData = Array.from(allTimeIncomeCategoryMap.entries())
-    .map(([name, value]) => ({ name, value }))
-    .sort((a, b) => b.value - a.value)
-
-  // Data for Chart 3: Income vs ZWS (All Time)
-  const zakatAmount = cashflows.filter(c => c.type === "Pengeluaran" && c.category === "Zakat").reduce((acc, curr) => acc + curr.amount, 0)
-  const wakafAmount = cashflows.filter(c => c.type === "Pengeluaran" && c.category === "Wakaf").reduce((acc, curr) => acc + curr.amount, 0)
-  const sedekahAmount = cashflows.filter(c => c.type === "Pengeluaran" && c.category === "Sedekah").reduce((acc, curr) => acc + curr.amount, 0)
-  const zwsTotal = zakatAmount + wakafAmount + sedekahAmount;
-
-  const zwsVsIncomePieData = [
-    { name: "Pemasukan Bersih", value: income > zwsTotal ? income - zwsTotal : 0 },
-    { name: "Zakat, Wakaf & Sedekah", value: zwsTotal }
-  ].filter(item => item.value > 0).sort((a, b) => b.value - a.value);
-
-  const zwsBreakdownPieData = [
-    { name: "Zakat", value: zakatAmount },
-    { name: "Wakaf", value: wakafAmount },
-    { name: "Sedekah", value: sedekahAmount }
-  ].filter(item => item.value > 0).sort((a, b) => b.value - a.value);
-
-  // Calculate upcoming due dates
-  const tenantsWithPayments = await prisma.tenant.findMany({
-    where: { status: "Active" },
-    include: {
-      building: true,
-      payments: {
-        orderBy: { rent_end_date: "desc" },
-        take: 1
-      }
-    }
-  });
-
-  const today = new Date();
-  today.setHours(0, 0, 0, 0);
-
-  let potensiPendapatan = 0;
-  let tenantMenunggak = 0;
-  let totalTunggakanRp = 0;
-
-  const upcomingDueDates = tenantsWithPayments.map(tenant => {
-    potensiPendapatan += tenant.building?.rent_price || 0;
-
-    const dueDate = tenant.payments && tenant.payments.length > 0
-      ? new Date(tenant.payments[0].rent_end_date)
-      : new Date(tenant.entry_date);
-
-    dueDate.setHours(0, 0, 0, 0);
-    const diffTime = dueDate.getTime() - today.getTime();
-    const diffDays = Math.ceil(diffTime / (1000 * 60 * 60 * 24));
-
-    if (diffDays < 0) {
-      tenantMenunggak++;
-      totalTunggakanRp += tenant.building?.rent_price || 0;
-    }
-
+  // Grafik 6 bulan terakhir
+  const chartData = Array.from({ length: 6 }, (_, i) => {
+    const offset = 5 - i
+    const ref = new Date(now.getFullYear(), now.getMonth() - offset, 1)
     return {
-      name: tenant.name,
-      room: tenant.building?.code || "N/A",
-      dueDate: dueDate,
-      diffDays: diffDays,
-      isLate: diffDays < 0,
-      isDueSoon: diffDays >= 0 && diffDays <= 7
-    };
+      month: formatMonthShort(ref.getFullYear(), ref.getMonth()),
+      Pemasukan: sumWhere(cashflows, (c) => isIncome(c) && inMonth(c.transaction_date, offset)),
+      Pengeluaran: sumWhere(cashflows, (c) => isExpense(c) && inMonth(c.transaction_date, offset)),
+    }
   })
-    .filter(item => item.isLate || item.diffDays <= 30) // Only show late or due within 30 days
-    .sort((a, b) => a.diffDays - b.diffDays)
-    .slice(0, 5); // Take top 5
 
-  const kamarKosong = totalBuildings - activeTenants;
-  const potensiKosongRp = totalPotensiKotor - potensiPendapatan;
-  const proyeksiSaldo = saldoAkhir + totalTunggakanRp;
+  // Rincian kategori (semua waktu)
+  const byCategory = (pred: (c: { type: string }) => boolean) => {
+    const map = new Map<string, number>()
+    cashflows.filter(pred).forEach((c) => map.set(c.category, (map.get(c.category) || 0) + c.amount))
+    return Array.from(map, ([name, value]) => ({ name, value }))
+  }
+  const incomeBreakdown = byCategory(isIncome)
+  const expenseBreakdown = byCategory(isExpense)
+
+  const zws = ["Zakat", "Wakaf", "Sedekah"].map((name) => ({
+    name,
+    value: sumWhere(cashflows, (c) => isExpense(c) && c.category === name),
+  }))
+  const zwsTotal = zws.reduce((a, z) => a + z.value, 0)
+
+  // ── Jatuh tempo & tunggakan ────────────────────────────────
+  const today = startOfToday()
+  const dueRows = activeTenantRows.map((tenant) => ({
+    tenant,
+    info: getDueInfo(tenant, today),
+    price: tenant.building?.rent_price || 0,
+  }))
+  const lateRows = dueRows.filter((r) => r.info.state === "late")
+  const potensiPendapatan = dueRows.reduce((acc, r) => acc + r.price, 0)
+  const totalTunggakanRp = lateRows.reduce((acc, r) => acc + r.price, 0)
+  const soonRows = dueRows.filter((r) => r.info.state === "soon")
+  const actionRows = [...lateRows, ...soonRows].sort((a, b) => a.info.diffDays - b.info.diffDays)
+
+  const potensiKosongRp = totalPotensiKotor - potensiPendapatan
+  const proyeksiSaldo = saldoAkhir + totalTunggakanRp
+  const proyeksiMaksimal = saldoAkhir + (potensiPendapatan - incomeThisMonth)
+  const capaianBulanIni = totalPotensiKotor > 0 ? (incomeThisMonth / totalPotensiKotor) * 100 : 0
 
   return (
-    <div className="space-y-8 animate-in fade-in slide-in-from-bottom-4 duration-700 ease-out">
-      {/* Header & Export */}
-      <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4">
-        <div>
-          <h2 className="text-3xl font-extrabold tracking-tight text-slate-800">
-            Overview
-          </h2>
-          <p className="text-muted-foreground mt-2 text-base">
-            Ringkasan performa properti dan keuangan bulan ini.
-          </p>
-        </div>
-        <a
-          href="/api/export"
-          target="_blank"
-          className="flex items-center gap-2 bg-emerald-600 text-white px-4 py-2.5 rounded-lg shadow-sm hover:bg-emerald-700 transition-all font-medium"
+    <div className="space-y-6 animate-in fade-in slide-in-from-bottom-2 duration-500">
+      <PageHeader
+        eyebrow={new Intl.DateTimeFormat("id-ID", { timeZone: TZ, dateStyle: "full" }).format(now)}
+        title={
+          <>
+            {greeting()}, {firstName} <span className="inline-block origin-[70%_70%] animate-[wave_2.4s_ease-in-out_1]">👋</span>
+          </>
+        }
+        description="Ini ringkasan properti dan keuangan Anda hari ini."
+        actions={
+          <>
+            <a href="/api/export" target="_blank" rel="noreferrer" className={buttonVariants({ variant: "outline", size: "lg" })}>
+              <FileSpreadsheet className="size-4" />
+              Export Excel
+            </a>
+            <Link href="/dashboard/payments" className={buttonVariants({ size: "lg" })}>
+              <Plus className="size-4" />
+              Catat pembayaran
+            </Link>
+          </>
+        }
+      />
+
+      {/* ── Hero saldo + okupansi ─────────────────────────────── */}
+      <div className="grid gap-4 xl:grid-cols-3">
+        <section className="relative overflow-hidden rounded-2xl bg-brand-navy p-6 text-white shadow-[0_20px_50px_-20px_rgb(11_17_32/0.6)] ring-1 ring-white/5 sm:p-7 xl:col-span-2">
+          <div className="grid-pattern pointer-events-none absolute inset-0 [mask-image:radial-gradient(ellipse_at_top_right,black,transparent_70%)]" />
+          <div className="pointer-events-none absolute -top-24 -right-16 size-72 rounded-full bg-emerald-400/25 blur-3xl" />
+          <div className="pointer-events-none absolute -bottom-28 left-1/3 size-72 rounded-full bg-indigo-500/20 blur-3xl" />
+
+          <div className="relative">
+            <div className="flex items-center justify-between gap-4">
+              <p className="text-[11px] font-semibold tracking-[0.14em] text-emerald-300/90 uppercase">Saldo kas bersih</p>
+              <span className="rounded-full bg-white/10 px-2.5 py-1 text-[11px] font-medium text-white/80 ring-1 ring-white/10">
+                Margin {formatPercent(profitMargin, 1)}
+              </span>
+            </div>
+            <p className="mt-3 text-4xl font-bold tracking-tight sm:text-5xl">{formatRupiah(saldoAkhir)}</p>
+            <p className="mt-2 text-sm text-white/60">
+              Dari total pemasukan {formatRupiahCompact(income)} dikurangi pengeluaran {formatRupiahCompact(expense)} sejak awal pencatatan.
+            </p>
+
+            <div className="mt-7 grid gap-3 sm:grid-cols-3">
+              <HeroStat label="Pemasukan bulan ini" value={incomeThisMonth} previous={incomeLastMonth} goodWhenUp />
+              <HeroStat label="Pengeluaran bulan ini" value={expenseThisMonth} previous={expenseLastMonth} />
+              <div className="rounded-xl bg-white/[0.06] p-4 ring-1 ring-white/10">
+                <p className="text-xs text-white/60">Kalau tunggakan lunas</p>
+                <p className="mt-1.5 text-lg font-semibold">{formatRupiahCompact(proyeksiSaldo)}</p>
+                <p className="mt-1 text-xs text-emerald-300/90">+{formatRupiahCompact(totalTunggakanRp)} tertagih</p>
+              </div>
+            </div>
+          </div>
+        </section>
+
+        <section className="surface flex flex-col p-6">
+          <div className="flex items-center justify-between">
+            <p className="eyebrow">Okupansi</p>
+            <Link href="/dashboard/buildings" className="text-xs font-semibold text-primary hover:underline">
+              Lihat unit
+            </Link>
+          </div>
+          <div className="flex flex-1 items-center gap-6 py-4">
+            <OccupancyRing filled={activeTenants} total={totalBuildings} />
+            <dl className="space-y-3 text-sm">
+              <div>
+                <dt className="text-muted-foreground">Unit terisi</dt>
+                <dd className="text-lg font-bold">
+                  {activeTenants}
+                  <span className="text-sm font-medium text-muted-foreground"> / {totalBuildings}</span>
+                </dd>
+              </div>
+              <div>
+                <dt className="text-muted-foreground">Unit kosong</dt>
+                <dd className="text-lg font-bold">{kamarKosong}</dd>
+              </div>
+            </dl>
+          </div>
+          <div className="rounded-xl bg-muted/60 px-4 py-3 text-[13px]">
+            <span className="text-muted-foreground">Potensi sewa bulanan </span>
+            <span className="font-semibold">{formatRupiah(potensiPendapatan)}</span>
+          </div>
+        </section>
+      </div>
+
+      {/* ── KPI ─────────────────────────────────────────────── */}
+      <div className="grid grid-cols-2 gap-3 sm:gap-4 xl:grid-cols-4">
+        <StatCard
+          label="Menunggak"
+          icon={CircleAlert}
+          tone={lateRows.length > 0 ? "danger" : "success"}
+          value={
+            <>
+              {lateRows.length} <span className="text-base font-semibold text-muted-foreground">penghuni</span>
+            </>
+          }
+          hint={lateRows.length > 0 ? `${formatRupiah(totalTunggakanRp)} belum tertagih` : "Semua penghuni lancar"}
+        />
+        <StatCard
+          label="Jatuh tempo ≤ 7 hari"
+          icon={AlarmClock}
+          tone={soonRows.length > 0 ? "warning" : "neutral"}
+          value={
+            <>
+              {soonRows.length} <span className="text-base font-semibold text-muted-foreground">penghuni</span>
+            </>
+          }
+          hint="Siapkan pengingat pembayaran"
+        />
+        <StatCard
+          label="Potensi hilang"
+          icon={BedDouble}
+          tone="info"
+          value={formatRupiahCompact(potensiKosongRp)}
+          hint={`${kamarKosong} unit kosong per bulan`}
+        />
+        <StatCard
+          label="Capaian bulan ini"
+          icon={Target}
+          tone="success"
+          value={formatPercent(capaianBulanIni)}
+          hint={`dari potensi kotor ${formatRupiahCompact(totalPotensiKotor)}`}
+          footer={
+            <div className="h-1.5 overflow-hidden rounded-full bg-muted">
+              <div className="h-full rounded-full bg-chart-1" style={{ width: `${Math.min(100, capaianBulanIni)}%` }} />
+            </div>
+          }
+        />
+      </div>
+
+      {/* ── Perlu tindakan + grafik ─────────────────────────── */}
+      <div className="grid gap-4 xl:grid-cols-5">
+        <Panel
+          className="xl:col-span-2"
+          title="Perlu ditagih"
+          description="Penghuni yang telat atau jatuh tempo minggu ini"
+          icon={HandCoins}
+          actions={
+            <Link href="/dashboard/tenants" className="text-xs font-semibold text-primary hover:underline">
+              Semua penghuni
+            </Link>
+          }
+          bodyClassName="px-3 pb-3 pt-4"
         >
-          <FileSpreadsheet className="h-4 w-4" />
-          Export ke Excel
-        </a>
+          {actionRows.length === 0 ? (
+            <EmptyState icon={Sparkles} title="Semua beres" description="Tidak ada penghuni yang telat atau jatuh tempo dalam 7 hari." />
+          ) : (
+            <ul className="thin-scrollbar max-h-[372px] space-y-1 overflow-y-auto pr-1">
+              {actionRows.map(({ tenant, info, price }) => {
+                const wa = whatsappLink(
+                  tenant.phone_1,
+                  `Halo ${tenant.name}, ini pengingat dari Razmel's Property: sewa kamar ${tenant.building?.code ?? ""} ${info.state === "late" ? "sudah lewat jatuh tempo" : "segera jatuh tempo"}. Terima kasih 🙏`
+                )
+                return (
+                  <li key={tenant.id} className="flex items-center gap-3 rounded-xl px-2.5 py-2.5 transition-colors hover:bg-muted/60">
+                    <span
+                      className={cn(
+                        "flex size-10 shrink-0 items-center justify-center rounded-xl text-xs font-bold",
+                        info.state === "late" ? "bg-danger-soft text-danger" : "bg-warning-soft text-warning"
+                      )}
+                    >
+                      {initials(tenant.name)}
+                    </span>
+                    <div className="min-w-0 flex-1">
+                      <p className="truncate text-sm font-semibold">{tenant.name}</p>
+                      <p className="truncate text-xs text-muted-foreground">
+                        {tenant.building?.code ?? "—"} · {formatRupiah(price)}
+                      </p>
+                    </div>
+                    <StatusPill tone={info.state === "late" ? "danger" : "warning"} dot>
+                      {dueLabel(info)}
+                    </StatusPill>
+                    {wa ? (
+                      <a
+                        href={wa}
+                        target="_blank"
+                        rel="noreferrer"
+                        title="Kirim pengingat via WhatsApp"
+                        aria-label={`Kirim pengingat WhatsApp ke ${tenant.name}`}
+                        className="flex size-8 shrink-0 items-center justify-center rounded-lg text-muted-foreground transition-colors hover:bg-success-soft hover:text-success"
+                      >
+                        <MessageCircle className="size-4" />
+                      </a>
+                    ) : (
+                      <span className="size-8 shrink-0" />
+                    )}
+                  </li>
+                )
+              })}
+            </ul>
+          )}
+        </Panel>
+
+        <Panel
+          className="xl:col-span-3"
+          title="Arus kas 6 bulan"
+          description="Pemasukan dan pengeluaran per bulan"
+          icon={TrendingUp}
+          actions={<CashflowLegend data={chartData} />}
+        >
+          <div className="h-[320px]">
+            <CashflowChart data={chartData} />
+          </div>
+        </Panel>
       </div>
 
-      <div className="grid gap-6 md:grid-cols-2 lg:grid-cols-5">
-        {/* Total Pendapatan Card */}
-        <Card className="border-slate-200/60 shadow-sm bg-white/70 backdrop-blur-xl transition-all hover:shadow-md hover:-translate-y-1">
-          <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-            <CardTitle className="text-sm font-semibold text-slate-500 uppercase tracking-wider">Total Pendapatan</CardTitle>
-            <div className="h-10 w-10 bg-emerald-100 rounded-xl flex items-center justify-center text-emerald-600 shadow-inner">
-              <Landmark className="h-5 w-5" />
-            </div>
-          </CardHeader>
-          <CardContent>
-            <div className="text-2xl font-bold text-slate-800">
-              Rp {income.toLocaleString("id-ID")}
-            </div>
-            <p className="text-xs font-medium text-slate-500 mt-2">
-              Sejak awal sistem digunakan
-            </p>
-          </CardContent>
-        </Card>
+      {/* ── Insight ─────────────────────────────────────────── */}
+      <section className="surface overflow-hidden">
+        <header className="flex items-center gap-3 border-b px-5 py-4">
+          <span className="flex size-9 items-center justify-center rounded-xl bg-gradient-to-br from-emerald-400 to-indigo-500 text-white">
+            <Sparkles className="size-[18px]" />
+          </span>
+          <div>
+            <h2 className="text-[15px] font-semibold">Analisis keuangan</h2>
+            <p className="text-[13px] text-muted-foreground">Performa riil dibanding potensi properti</p>
+          </div>
+        </header>
+        <div className="grid divide-y md:grid-cols-3 md:divide-x md:divide-y-0">
+          <Insight label="Performa vs potensi" tone="info">
+            Pemasukan bulan ini <b>{formatRupiah(incomeThisMonth)}</b> baru mencapai <b>{formatPercent(capaianBulanIni)}</b> dari potensi kotor{" "}
+            <b>{formatRupiah(totalPotensiKotor)}</b>.
+          </Insight>
+          <Insight label="Sumber kehilangan" tone="danger">
+            <b>{kamarKosong} unit kosong</b> senilai {formatRupiah(potensiKosongRp)}/bulan, dan{" "}
+            <b className="text-danger">{lateRows.length} penghuni menunggak</b> total {formatRupiah(totalTunggakanRp)}.
+          </Insight>
+          <Insight label="Proyeksi maksimal" tone="success">
+            Jika semua unit terisi dan tagihan lunas, saldo bisa mencapai <b className="text-success">{formatRupiah(proyeksiMaksimal)}</b>.
+          </Insight>
+        </div>
+      </section>
 
-        {/* Pendapatan Bulan Ini Card */}
-        <Card className="border-slate-200/60 shadow-sm bg-white/70 backdrop-blur-xl transition-all hover:shadow-md hover:-translate-y-1">
-          <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-            <CardTitle className="text-sm font-semibold text-slate-500 uppercase tracking-wider">Pendapatan Bulan Ini</CardTitle>
-            <div className="h-10 w-10 bg-green-100 rounded-xl flex items-center justify-center text-green-600 shadow-inner">
-              <Wallet className="h-5 w-5" />
-            </div>
-          </CardHeader>
-          <CardContent>
-            <div className="text-2xl font-bold text-slate-800">
-              Rp {incomeThisMonth.toLocaleString("id-ID")}
-            </div>
-            <p className={`text-xs font-medium mt-2 flex items-center gap-1 w-max px-2 py-1 rounded-md ${incomeDiff >= 0 ? 'text-green-600 bg-green-50' : 'text-red-600 bg-red-50'}`}>
-              {incomeDiff >= 0 ? <ArrowUpRight className="h-3 w-3" /> : <ArrowDownRight className="h-3 w-3" />}
-              {incomeDiff >= 0 ? '+' : '-'} Rp {Math.abs(incomeDiff).toLocaleString("id-ID")} vs bln lalu
-            </p>
-          </CardContent>
-        </Card>
-
-        {/* Pengeluaran Card */}
-        <Card className="border-slate-200/60 shadow-sm bg-white/70 backdrop-blur-xl transition-all hover:shadow-md hover:-translate-y-1">
-          <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-            <CardTitle className="text-sm font-semibold text-slate-500 uppercase tracking-wider">Pengeluaran</CardTitle>
-            <div className="h-10 w-10 bg-red-100 rounded-xl flex items-center justify-center text-red-600 shadow-inner">
-              <ArrowDownRight className="h-5 w-5" />
-            </div>
-          </CardHeader>
-          <CardContent>
-            <div className="text-2xl font-bold text-slate-800">
-              Rp {expense.toLocaleString("id-ID")}
-            </div>
-            <p className="text-xs font-medium text-red-600 mt-2 flex items-center gap-1 bg-red-50 w-max px-2 py-1 rounded-md">
-              <ArrowUpRight className="h-3 w-3" /> +4.3% dari bulan lalu
-            </p>
-          </CardContent>
-        </Card>
-
-        {/* Okupansi Card */}
-        <Card className="border-slate-200/60 shadow-sm bg-white/70 backdrop-blur-xl transition-all hover:shadow-md hover:-translate-y-1">
-          <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-            <CardTitle className="text-sm font-semibold text-slate-500 uppercase tracking-wider">Kamar Terisi</CardTitle>
-            <div className="h-10 w-10 bg-blue-100 rounded-xl flex items-center justify-center text-blue-600 shadow-inner">
-              <Users className="h-5 w-5" />
-            </div>
-          </CardHeader>
-          <CardContent>
-            <div className="text-2xl font-bold text-slate-800">
-              {activeTenants} / {totalBuildings}
-            </div>
-            <p className="text-xs text-muted-foreground mt-2 font-medium">
-              Tingkat okupansi: {occupancyRate.toFixed(0)}%
-            </p>
-            <div className="w-full bg-slate-100 h-1.5 mt-2 rounded-full overflow-hidden">
-              <div className="bg-blue-600 h-full rounded-full" style={{ width: `${occupancyRate}%` }}></div>
-            </div>
-          </CardContent>
-        </Card>
-
-        {/* Kosong Card */}
-        <Card className="border-slate-200/60 shadow-sm bg-white/70 backdrop-blur-xl transition-all hover:shadow-md hover:-translate-y-1">
-          <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-            <CardTitle className="text-sm font-semibold text-slate-500 uppercase tracking-wider">Kamar Kosong</CardTitle>
-            <div className="h-10 w-10 bg-slate-100 rounded-xl flex items-center justify-center text-slate-600 shadow-inner">
-              <Building className="h-5 w-5" />
-            </div>
-          </CardHeader>
-          <CardContent>
-            <div className="text-2xl font-bold text-slate-800">
-              {totalBuildings - activeTenants}
-            </div>
-            <p className="text-xs text-muted-foreground mt-2 font-medium">
-              Siap untuk disewakan
-            </p>
-          </CardContent>
-        </Card>
-      </div>
-
-      {/* Baris Kedua: Parameter Bisnis (New) */}
-      <div className="grid gap-6 md:grid-cols-2 lg:grid-cols-4">
-        {/* Saldo Akhir Card */}
-        <Card className="border-slate-200/60 shadow-sm bg-white/70 backdrop-blur-xl transition-all hover:shadow-md hover:-translate-y-1">
-          <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-            <CardTitle className="text-sm font-semibold text-slate-500 uppercase tracking-wider">Saldo Akhir</CardTitle>
-            <div className="h-10 w-10 bg-emerald-100 rounded-xl flex items-center justify-center text-emerald-600 shadow-inner">
-              <Landmark className="h-5 w-5" />
-            </div>
-          </CardHeader>
-          <CardContent>
-            <div className="text-2xl font-bold text-slate-800">
-              Rp {saldoAkhir.toLocaleString("id-ID")}
-            </div>
-            <p className="text-xs font-medium text-slate-500 mt-2">
-              Sisa Kas Bersih
-            </p>
-          </CardContent>
-        </Card>
-
-        {/* Profit Margin Card */}
-        <Card className="border-slate-200/60 shadow-sm bg-white/70 backdrop-blur-xl transition-all hover:shadow-md hover:-translate-y-1">
-          <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-            <CardTitle className="text-sm font-semibold text-slate-500 uppercase tracking-wider">Margin Laba</CardTitle>
-            <div className="h-10 w-10 bg-indigo-100 rounded-xl flex items-center justify-center text-indigo-600 shadow-inner">
-              <PieChart className="h-5 w-5" />
-            </div>
-          </CardHeader>
-          <CardContent>
-            <div className="text-2xl font-bold text-slate-800">
-              {profitMargin.toFixed(1)}%
-            </div>
-            <p className="text-xs font-medium text-slate-500 mt-2">
-              Persentase Keuntungan
-            </p>
-          </CardContent>
-        </Card>
-
-        {/* Potensi Pendapatan Card */}
-        <Card className="border-slate-200/60 shadow-sm bg-white/70 backdrop-blur-xl transition-all hover:shadow-md hover:-translate-y-1">
-          <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-            <CardTitle className="text-sm font-semibold text-slate-500 uppercase tracking-wider">Potensi Bulanan</CardTitle>
-            <div className="h-10 w-10 bg-blue-100 rounded-xl flex items-center justify-center text-blue-600 shadow-inner">
-              <TrendingUp className="h-5 w-5" />
-            </div>
-          </CardHeader>
-          <CardContent>
-            <div className="text-2xl font-bold text-slate-800">
-              Rp {potensiPendapatan.toLocaleString("id-ID")}
-            </div>
-            <p className="text-xs font-medium text-slate-500 mt-2">
-              Dari {activeTenants} kamar yang aktif
-            </p>
-          </CardContent>
-        </Card>
-
-        {/* Tunggakan Card */}
-        <Card className={`border-slate-200/60 shadow-sm bg-white/70 backdrop-blur-xl transition-all hover:shadow-md hover:-translate-y-1 ${tenantMenunggak > 0 ? 'border-red-200 bg-red-50/30' : ''}`}>
-          <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-            <CardTitle className="text-sm font-semibold text-slate-500 uppercase tracking-wider">Tunggakan</CardTitle>
-            <div className={`h-10 w-10 rounded-xl flex items-center justify-center shadow-inner ${tenantMenunggak > 0 ? 'bg-red-100 text-red-600' : 'bg-slate-100 text-slate-600'}`}>
-              <CalendarOff className="h-5 w-5" />
-            </div>
-          </CardHeader>
-          <CardContent>
-            <div className={`text-2xl font-bold ${tenantMenunggak > 0 ? 'text-red-700' : 'text-slate-800'}`}>
-              {tenantMenunggak} <span className="text-sm font-medium">Penghuni</span>
-            </div>
-            <p className={`text-xs font-medium mt-2 ${tenantMenunggak > 0 ? 'text-red-600' : 'text-slate-500'}`}>
-              Lewat batas jatuh tempo
-            </p>
-          </CardContent>
-        </Card>
-      </div>
-
-      {/* Analisis Cerdas Section */}
-      <Card className="bg-gradient-to-br from-indigo-50/50 via-white to-blue-50/30 rounded-2xl border border-indigo-100 shadow-sm hover:shadow-md transition-shadow duration-300 overflow-hidden relative">
-        <div className="absolute top-0 right-0 w-64 h-64 bg-blue-100/40 rounded-full blur-3xl -mr-20 -mt-20 pointer-events-none"></div>
-        <CardHeader className="border-b border-indigo-50/50 pb-5 px-6 pt-6">
-          <CardTitle className="text-xl font-extrabold text-indigo-950 flex items-center gap-2">
-            <span className="text-2xl">💡</span> Analisis Keuangan Cerdas
-          </CardTitle>
-          <CardDescription className="text-sm font-medium text-indigo-700/70 mt-1">
-            Ringkasan performa riil dan proyeksi pendapatan properti Anda.
-          </CardDescription>
-        </CardHeader>
-        <CardContent className="pt-6 px-6 pb-6">
-          <div className="grid gap-6 md:grid-cols-3">
-            <div className="space-y-2">
-              <h4 className="text-xs font-bold text-indigo-800 uppercase tracking-wider">Performa vs Potensi</h4>
-              <p className="text-sm font-medium text-slate-700 leading-relaxed">
-                Pemasukan riil bulan ini (<strong className="text-slate-900">Rp {Math.round(incomeThisMonth).toLocaleString("id-ID")}</strong>)
-                mencapai <strong className="text-indigo-600">{totalPotensiKotor > 0 ? Math.round((incomeThisMonth / totalPotensiKotor) * 100) : 0}%</strong> dari total potensi kotor
-                (Rp {Math.round(totalPotensiKotor).toLocaleString("id-ID")}).
-              </p>
-            </div>
-            <div className="space-y-2 md:border-l border-indigo-100 md:pl-6">
-              <h4 className="text-xs font-bold text-red-700 uppercase tracking-wider">Alasan Kehilangan Potensi</h4>
-              <p className="text-sm font-medium text-slate-700 leading-relaxed">
-                Terdapat <strong className="text-slate-900">{kamarKosong} kamar kosong</strong> senilai Rp {Math.round(potensiKosongRp).toLocaleString("id-ID")},
-                serta <strong className="text-red-600">{tenantMenunggak} penghuni menunggak</strong> dengan total belum tertagih <strong className="text-red-600">Rp {Math.round(totalTunggakanRp).toLocaleString("id-ID")}</strong>.
-                <br/><br/>
-                Jika penunggak melunasi, Saldo Akhir Anda menjadi <strong className="text-emerald-600 font-bold">Rp {Math.round(proyeksiSaldo).toLocaleString("id-ID")}</strong>.
-              </p>
-            </div>
-            <div className="space-y-2 md:border-l border-indigo-100 md:pl-6">
-              <h4 className="text-xs font-bold text-emerald-700 uppercase tracking-wider">Proyeksi Saldo Maksimal</h4>
-              <p className="text-sm font-medium text-slate-700 leading-relaxed">
-                Jika seluruh kamar penuh dan seluruh tagihan dibayar lunas (tanpa tunggakan), maka potensi maksimal Saldo Akhir Anda adalah <strong className="text-emerald-600 font-extrabold text-[15px]">Rp {Math.round(saldoAkhir + (potensiPendapatan - incomeThisMonth)).toLocaleString("id-ID")}</strong>.
+      {/* ── Rincian kategori ────────────────────────────────── */}
+      <div className="grid gap-4 md:grid-cols-2 xl:grid-cols-3">
+        <Panel title="Rincian pemasukan" description="Semua waktu, per kategori" icon={ArrowUpRight}>
+          <BreakdownList items={incomeBreakdown} color="var(--chart-1)" />
+        </Panel>
+        <Panel title="Rincian pengeluaran" description="Semua waktu, per kategori" icon={ArrowDownRight}>
+          <BreakdownList items={expenseBreakdown} color="var(--chart-2)" />
+        </Panel>
+        <Panel title="Zakat, wakaf & sedekah" description="Porsi amal dari total pemasukan" icon={HeartHandshake}>
+          <div className="mb-5 flex items-end justify-between gap-4">
+            <div>
+              <p className="text-2xl font-bold tracking-tight">{formatRupiah(zwsTotal)}</p>
+              <p className="text-[13px] text-muted-foreground">
+                {formatPercent(income > 0 ? (zwsTotal / income) * 100 : 0, 1)} dari total pemasukan
               </p>
             </div>
           </div>
-        </CardContent>
-      </Card>
-
-      <div className="grid gap-6 md:grid-cols-2 lg:grid-cols-7">
-        {/* Main Chart Section */}
-        <Card className="lg:col-span-4 border-slate-200/60 shadow-sm bg-white/70 backdrop-blur-xl">
-          <CardHeader>
-            <CardTitle className="text-slate-800">Grafik Arus Kas (6 Bulan Terakhir)</CardTitle>
-            <CardDescription>
-              Perbandingan pemasukan sewa dan pengeluaran operasional
-            </CardDescription>
-          </CardHeader>
-          <CardContent className="h-[350px] w-full pt-4">
-            <CashflowChart data={chartData} />
-          </CardContent>
-        </Card>
-
-        <Card className="col-span-3 border-slate-200/60 shadow-sm bg-white/70 backdrop-blur-xl">
-          <CardHeader>
-            <CardTitle className="text-lg">Jatuh Tempo Terdekat</CardTitle>
-            <CardDescription>Penyewa yang mendekati batas waktu</CardDescription>
-          </CardHeader>
-          <CardContent>
-            <div className="space-y-4">
-              {upcomingDueDates.length > 0 ? (
-                upcomingDueDates.map((item, index) => (
-                  <div key={index} className={`flex items-center gap-4 rounded-xl p-4 border shadow-sm transition-all hover:shadow-md cursor-pointer ${item.isLate ? 'bg-gradient-to-r from-red-50 to-white border-red-100 hover:border-red-200' : item.isDueSoon ? 'bg-gradient-to-r from-orange-50 to-white border-orange-100 hover:border-orange-200' : 'bg-white border-slate-100 hover:border-slate-200'}`}>
-                    <div className={`flex h-12 w-12 shrink-0 items-center justify-center rounded-full ${item.isLate ? 'bg-red-100 text-red-600' : item.isDueSoon ? 'bg-orange-100 text-orange-600' : 'bg-slate-100 text-slate-500'}`}>
-                      <AlertCircle className="h-6 w-6" />
-                    </div>
-                    <div className="flex-1 space-y-1">
-                      <p className="text-sm font-bold text-slate-800">{item.name}</p>
-                      <p className="text-xs font-medium text-slate-500">Kamar {item.room}</p>
-                    </div>
-                    <div className="text-right">
-                      <div className={`text-sm font-bold px-3 py-1 rounded-full ${item.isLate ? 'text-red-600 bg-red-100' : item.isDueSoon ? 'text-orange-600 bg-orange-100' : 'text-slate-500 bg-slate-100'}`}>
-                        {item.isLate ? `Terlewat ${Math.abs(item.diffDays)} Hari` : item.diffDays === 0 ? "Hari Ini" : `Sisa ${item.diffDays} Hari`}
-                      </div>
-                    </div>
-                  </div>
-                ))
-              ) : (
-                <div className="text-center text-slate-500 py-6 text-sm">
-                  Tidak ada penghuni yang mendekati jatuh tempo.
-                </div>
-              )}
-            </div>
-          </CardContent>
-        </Card>
+          <BreakdownList items={zws} color="var(--chart-3)" emptyText="Belum ada catatan ZWS" />
+        </Panel>
       </div>
 
-      <div className="grid gap-6 md:grid-cols-2 lg:grid-cols-3">
-        <Card className="border-slate-200/60 shadow-sm bg-white/70 backdrop-blur-xl">
-          <CardHeader>
-            <CardTitle className="text-slate-800 text-lg">Pemasukan vs Pengeluaran</CardTitle>
-            <CardDescription>Rasio keseluruhan dari awal s/d terbaru</CardDescription>
-          </CardHeader>
-          <CardContent className="h-[380px] w-full pt-4 pb-6">
-            <CategoryPieChart data={incomeVsExpensePieData} />
-          </CardContent>
-        </Card>
-
-        <Card className="border-slate-200/60 shadow-sm bg-white/70 backdrop-blur-xl">
-          <CardHeader>
-            <CardTitle className="text-slate-800 text-lg">Rincian Pemasukan</CardTitle>
-            <CardDescription>Berdasarkan semua jenis kategori</CardDescription>
-          </CardHeader>
-          <CardContent className="h-[380px] w-full pt-4 pb-6">
-            <CategoryPieChart data={allTimeIncomePieData} />
-          </CardContent>
-        </Card>
-
-        <Card className="border-slate-200/60 shadow-sm bg-white/70 backdrop-blur-xl">
-          <CardHeader>
-            <CardTitle className="text-slate-800 text-lg">Rincian Pengeluaran</CardTitle>
-            <CardDescription>Berdasarkan semua jenis kategori</CardDescription>
-          </CardHeader>
-          <CardContent className="h-[380px] w-full pt-4 pb-6">
-            <CategoryPieChart data={allTimeExpensePieData} />
-          </CardContent>
-        </Card>
-
-        <Card className="border-slate-200/60 shadow-sm bg-white/70 backdrop-blur-xl">
-          <CardHeader>
-            <CardTitle className="text-slate-800 text-lg">Penghasilan vs ZWS</CardTitle>
-            <CardDescription>Porsi amal (ZWS) dibandingkan total Pemasukan</CardDescription>
-          </CardHeader>
-          <CardContent className="h-[380px] w-full pt-4 pb-6">
-            <CategoryPieChart data={zwsVsIncomePieData} />
-          </CardContent>
-        </Card>
-
-        <Card className="border-slate-200/60 shadow-sm bg-white/70 backdrop-blur-xl">
-          <CardHeader>
-            <CardTitle className="text-slate-800 text-lg">Rincian ZWS</CardTitle>
-            <CardDescription>Perbandingan antara Zakat, Wakaf, dan Sedekah</CardDescription>
-          </CardHeader>
-          <CardContent className="h-[380px] w-full pt-4 pb-6">
-            <CategoryPieChart data={zwsBreakdownPieData} />
-          </CardContent>
-        </Card>
+      <div className="flex justify-end">
+        <Link href="/dashboard/cashflow" className="group inline-flex items-center gap-1.5 text-sm font-semibold text-primary">
+          Buka buku besar lengkap
+          <ArrowRight className="size-4 transition-transform group-hover:translate-x-0.5" />
+        </Link>
       </div>
+    </div>
+  )
+}
+
+function HeroStat({
+  label,
+  value,
+  previous,
+  goodWhenUp = false,
+}: {
+  label: string
+  value: number
+  previous: number
+  goodWhenUp?: boolean
+}) {
+  const diff = value - previous
+  const up = diff >= 0
+  const good = goodWhenUp ? up : !up
+  return (
+    <div className="rounded-xl bg-white/[0.06] p-4 ring-1 ring-white/10">
+      <p className="text-xs text-white/60">{label}</p>
+      <p className="mt-1.5 text-lg font-semibold">{formatRupiahCompact(value)}</p>
+      <p className={cn("mt-1 flex items-center gap-1 text-xs", diff === 0 ? "text-white/50" : good ? "text-emerald-300" : "text-rose-300")}>
+        {diff === 0 ? (
+          "Sama dengan bulan lalu"
+        ) : (
+          <>
+            {up ? <ArrowUpRight className="size-3.5" /> : <ArrowDownRight className="size-3.5" />}
+            {formatRupiahCompact(Math.abs(diff))} vs bulan lalu
+          </>
+        )}
+      </p>
+    </div>
+  )
+}
+
+function Insight({ label, tone, children }: { label: string; tone: "info" | "danger" | "success"; children: React.ReactNode }) {
+  const dot = { info: "bg-info", danger: "bg-danger", success: "bg-success" }[tone]
+  return (
+    <div className="space-y-2 p-5">
+      <p className="flex items-center gap-2 text-xs font-semibold tracking-wide text-muted-foreground uppercase">
+        <span className={cn("size-1.5 rounded-full", dot)} />
+        {label}
+      </p>
+      <p className="text-sm leading-relaxed text-foreground/85 [&_b]:font-semibold">{children}</p>
     </div>
   )
 }

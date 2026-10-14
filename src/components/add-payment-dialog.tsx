@@ -2,7 +2,7 @@
 
 import { useState } from "react"
 import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog"
-import { Button } from "@/components/ui/button"
+import { Button, buttonVariants } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
 import { Label } from "@/components/ui/label"
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select"
@@ -67,7 +67,7 @@ export function AddPaymentDialog({ activeTenants }: { activeTenants: any[] }) {
         setIsOverride(false)
       }
     }}>
-      <DialogTrigger className="flex items-center gap-2 bg-primary text-primary-foreground hover:bg-primary/90 px-4 py-2.5 rounded-lg font-medium transition-all shadow-sm">
+      <DialogTrigger className={buttonVariants({ size: "lg" })}>
         <Plus className="h-4 w-4" />
         <span>Catat Pembayaran</span>
       </DialogTrigger>
@@ -124,7 +124,7 @@ export function AddPaymentDialog({ activeTenants }: { activeTenants: any[] }) {
               <button
                 type="button"
                 onClick={() => setIsOverride(!isOverride)}
-                className={`text-xs px-2 py-0.5 rounded-full border transition-colors ${isOverride ? "bg-amber-100 text-amber-700 border-amber-300" : "text-slate-500 border-slate-200 hover:border-slate-300"}`}
+                className={`text-xs px-2 py-0.5 rounded-full border transition-colors ${isOverride ? "bg-warning-soft text-warning border-warning/40" : "text-muted-foreground border-border hover:border-input"}`}
               >
                 {isOverride ? "✏️ Manual" : "Override Harga"}
               </button>
@@ -135,7 +135,7 @@ export function AddPaymentDialog({ activeTenants }: { activeTenants: any[] }) {
               value={amount}
               onChange={isOverride ? (e) => setAmount(Number(e.target.value)) : undefined}
               readOnly={!isOverride}
-              className={`font-bold text-emerald-600 focus-visible:ring-0 ${isOverride ? "bg-white border-amber-300" : "bg-slate-50"}`}
+              className={`font-bold text-success focus-visible:ring-0 ${isOverride ? "bg-card border-warning/50" : "bg-muted"}`}
             />
             <p className="text-xs text-muted-foreground">
               {isOverride ? "⚠️ Mode manual: Anda mengatur sendiri nominalnya." : "Otomatis dihitung dari harga kamar x durasi sewa."}

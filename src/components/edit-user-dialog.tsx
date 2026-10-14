@@ -118,7 +118,7 @@ export function EditUserDialog({
               </SelectContent>
             </Select>
             {user.role === "OWNER" && (
-              <p className="text-xs text-amber-600">Role Owner tidak dapat diubah.</p>
+              <p className="text-xs text-warning">Role Owner tidak dapat diubah.</p>
             )}
           </div>
           <div className="flex justify-between items-center pt-2">

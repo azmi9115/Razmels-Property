@@ -79,17 +79,17 @@ export function RoomHistoryDialog({
             <p className="text-sm text-muted-foreground text-center py-4">Belum ada riwayat kamar tercatat.</p>
           )}
           {histories.map(h => (
-            <div key={h.id} className="flex items-center gap-3 p-3 rounded-lg bg-slate-50 border border-slate-100">
+            <div key={h.id} className="flex items-center gap-3 p-3 rounded-xl bg-muted/60 border">
               <span className="bg-indigo-100 text-indigo-700 text-xs font-bold px-2 py-1 rounded-md shrink-0">
                 {h.building?.code || "—"}
               </span>
-              <div className="flex-1 text-xs text-slate-600">
+              <div className="flex-1 text-xs text-muted-foreground">
                 <span>{new Date(h.moved_in).toLocaleDateString("id-ID", { day: "numeric", month: "short", year: "numeric" })}</span>
                 <span className="mx-1">→</span>
                 <span>{h.moved_out ? new Date(h.moved_out).toLocaleDateString("id-ID", { day: "numeric", month: "short", year: "numeric" }) : "Sekarang"}</span>
-                {h.notes && <span className="ml-2 text-slate-400">({h.notes})</span>}
+                {h.notes && <span className="ml-2 text-muted-foreground/70">({h.notes})</span>}
               </div>
-              <button onClick={() => handleDelete(h.id)} className="text-red-400 hover:text-red-600 transition-colors">
+              <button onClick={() => handleDelete(h.id)} className="text-danger/70 hover:text-danger transition-colors">
                 <Trash2 className="h-4 w-4" />
               </button>
             </div>

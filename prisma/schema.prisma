@@ -10,9 +10,10 @@ datasource db {
 model Building {
   id          String    @id @default(uuid())
   code        String    @unique
-  type        String    // "Kontrakan" | "Kosan"
+  type        String    // "Kamar" | "Kios" | "Kontrakan" | "Apartemen"
   rent_price  Float
-  rent_period String    // "Bulanan" | "Tahunan"
+  rent_period String    // "Bulanan" | "Triwulan" | "Tahunan"
+  description String?   // Lokasi & fasilitas yang sudah termasuk sewa; tampil di landing page
   createdAt   DateTime  @default(now())
   
   tenants       Tenant[]

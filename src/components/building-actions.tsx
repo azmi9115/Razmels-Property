@@ -42,7 +42,7 @@ export function BuildingActions({ building, isOccupied }: { building: any, isOcc
             </DropdownMenuItem>
             <DropdownMenuSeparator />
             <DropdownMenuItem 
-              className="text-red-600 focus:text-red-600"
+              className="text-danger focus:text-danger"
               onClick={() => setShowDeleteAlert(true)}
             >
               <Trash2 className="mr-2 h-4 w-4" /> Hapus

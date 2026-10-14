@@ -2,10 +2,10 @@
 
 import { useState } from "react"
 import { EditUserDialog } from "@/components/edit-user-dialog"
-import { Card, CardContent } from "@/components/ui/card"
-import { Badge } from "@/components/ui/badge"
 import { Button } from "@/components/ui/button"
-import { Pencil, Crown, UserCog } from "lucide-react"
+import { Crown, Pencil, UserCog } from "lucide-react"
+import { StatusPill } from "@/components/status-pill"
+import { formatDate, initials } from "@/lib/format"
 
 type User = {
   id: string
@@ -18,85 +18,56 @@ type User = {
 export function UsersTable({ users }: { users: User[] }) {
   const [editUser, setEditUser] = useState<User | null>(null)
 
+  if (users.length === 0) {
+    return (
+      <section className="surface flex flex-col items-center gap-2 px-6 py-16 text-center">
+        <UserCog className="size-10 text-muted-foreground/40" />
+        <p className="text-sm text-muted-foreground">Belum ada akun pengguna. Tambah akun pertama!</p>
+      </section>
+    )
+  }
+
   return (
     <>
-      <Card className="border-slate-200/60 shadow-sm bg-white/70 backdrop-blur-xl">
-        <CardContent className="p-0">
-          <div className="overflow-x-auto">
-            <table className="w-full text-sm">
-              <thead>
-                <tr className="border-b border-slate-100">
-                  <th className="text-left py-3 px-6 text-slate-500 font-semibold uppercase text-xs tracking-wider">
-                    Nama
-                  </th>
-                  <th className="text-left py-3 px-6 text-slate-500 font-semibold uppercase text-xs tracking-wider">
-                    Email
-                  </th>
-                  <th className="text-left py-3 px-6 text-slate-500 font-semibold uppercase text-xs tracking-wider">
-                    Role
-                  </th>
-                  <th className="text-left py-3 px-6 text-slate-500 font-semibold uppercase text-xs tracking-wider">
-                    Dibuat
-                  </th>
-                  <th className="text-right py-3 px-6 text-slate-500 font-semibold uppercase text-xs tracking-wider">
-                    Aksi
-                  </th>
-                </tr>
-              </thead>
-              <tbody className="divide-y divide-slate-50">
-                {users.map((user) => (
-                  <tr key={user.id} className="hover:bg-slate-50/80 transition-colors">
-                    <td className="py-4 px-6">
-                      <div className="flex items-center gap-3">
-                        <div className="h-9 w-9 rounded-full bg-gradient-to-br from-slate-200 to-slate-300 flex items-center justify-center font-bold text-slate-600 text-sm shrink-0">
-                          {user.name.charAt(0).toUpperCase()}
-                        </div>
-                        <span className="font-semibold text-slate-800">{user.name}</span>
-                      </div>
-                    </td>
-                    <td className="py-4 px-6 text-slate-600">{user.email}</td>
-                    <td className="py-4 px-6">
-                      {user.role === "OWNER" ? (
-                        <Badge className="bg-violet-100 text-violet-700 border-violet-200 hover:bg-violet-100 gap-1">
-                          <Crown className="h-3 w-3" />
-                          Owner
-                        </Badge>
-                      ) : (
-                        <Badge className="bg-blue-100 text-blue-700 border-blue-200 hover:bg-blue-100 gap-1">
-                          <UserCog className="h-3 w-3" />
-                          Admin
-                        </Badge>
-                      )}
-                    </td>
-                    <td className="py-4 px-6 text-slate-500 text-xs">
-                      {new Date(user.createdAt).toLocaleDateString("id-ID", {
-                        day: "numeric", month: "short", year: "numeric"
-                      })}
-                    </td>
-                    <td className="py-4 px-6 text-right">
-                      <Button
-                        variant="ghost"
-                        size="sm"
-                        onClick={() => setEditUser(user)}
-                        className="text-slate-600 hover:text-slate-800 hover:bg-slate-100"
-                      >
-                        <Pencil className="h-4 w-4 mr-1" />
-                        Edit
-                      </Button>
-                    </td>
-                  </tr>
-                ))}
-              </tbody>
-            </table>
-            {users.length === 0 && (
-              <div className="text-center py-16 text-muted-foreground">
-                <UserCog className="h-10 w-10 mx-auto mb-3 opacity-30" />
-                <p>Belum ada akun pengguna. Tambah akun pertama!</p>
+      <div className="grid gap-4 sm:grid-cols-2 xl:grid-cols-3">
+        {users.map((user) => {
+          const isOwner = user.role === "OWNER"
+          return (
+            <article key={user.id} className="surface relative flex flex-col gap-5 overflow-hidden p-5">
+              {isOwner && <div className="pointer-events-none absolute -top-12 -right-12 size-32 rounded-full bg-emerald-400/15 blur-2xl" />}
+              <div className="relative flex items-start gap-4">
+                <span
+                  className={
+                    isOwner
+                      ? "flex size-12 shrink-0 items-center justify-center rounded-2xl bg-gradient-to-br from-emerald-400 to-teal-600 text-sm font-bold text-emerald-950"
+                      : "flex size-12 shrink-0 items-center justify-center rounded-2xl bg-muted text-sm font-bold text-muted-foreground"
+                  }
+                >
+                  {initials(user.name)}
+                </span>
+                <div className="min-w-0 flex-1">
+                  <p className="truncate font-semibold">{user.name}</p>
+                  <p className="truncate text-[13px] text-muted-foreground">{user.email}</p>
+                </div>
               </div>
-            )}
-          </div>
-        </CardContent>
-      </Card>
+              <div className="relative flex items-center justify-between gap-3 border-t pt-4">
+                <div className="flex items-center gap-2">
+                  {isOwner ? (
+                    <StatusPill tone="success" icon={Crown}>Owner</StatusPill>
+                  ) : (
+                    <StatusPill tone="info" icon={UserCog}>Admin</StatusPill>
+                  )}
+                  <span className="text-xs text-muted-foreground">sejak {formatDate(user.createdAt)}</span>
+                </div>
+                <Button variant="outline" size="sm" onClick={() => setEditUser(user)} className="gap-1.5">
+                  <Pencil className="size-3.5" />
+                  Edit
+                </Button>
+              </div>
+            </article>
+          )
+        })}
+      </div>
 
       {editUser && (
         <EditUserDialog
