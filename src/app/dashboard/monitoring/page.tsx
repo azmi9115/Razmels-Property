@@ -45,103 +45,51 @@ export default async function MonitoringPage() {
   const today = new Date()
   today.setHours(0, 0, 0, 0)
 
+  // Aturan sama dengan sheet "Monitoring Sewa" di Master Data Kontrakan.xlsm:
+  // - Tiap pembayaran milik satu periode bulan (ID Excel "KODE MMM YY"). Periode awal
+  //   = bulan rent_end_date dikurangi durasi; pembayaran multi-bulan menutup beberapa bulan.
+  // - Batas bayar = tanggal 7 bulan itu untuk SEMUA unit (bukan tanggal masuk).
+  //   Transfer ≤ tgl 7 → TEPAT, lewat → TELAT.
+  // - Bulan yang sudah mulai tapi belum ada pembayarannya → BELUM BAYAR.
+  const monthKey = (d: Date) => d.getFullYear() * 12 + d.getMonth()
+
   const rows = tenants.map(tenant => {
     const entryDate = new Date(tenant.entry_date)
     entryDate.setHours(0, 0, 0, 0)
+    const exitDate = tenant.exit_date ? new Date(tenant.exit_date) : null
+    exitDate?.setHours(0, 0, 0, 0)
 
-    const statusPerMonth = months.map(({ year, month }) => {
-      // First day of this target month
-      const monthStart = new Date(year, month, 1)
-      monthStart.setHours(0, 0, 0, 0)
-      // Last day of this target month
-      const monthEnd = new Date(year, month + 1, 0)
-      monthEnd.setHours(23, 59, 59, 999)
-
-      // If tenant hadn't moved in yet → KOSONG
-      if (entryDate > monthEnd) return "KOSONG"
-
-      // If exit_date exists and tenant left before this month → KOSONG
-      if (tenant.exit_date) {
-        const exitDate = new Date(tenant.exit_date)
-        exitDate.setHours(0, 0, 0, 0)
-        if (exitDate < monthStart) return "KOSONG"
-      }
-
-      // Calculate the specific due date for this month based on entryDay
-      const entryDay = entryDate.getDate();
-      const dueDateThisMonth = new Date(year, month, entryDay);
-      // Clamp day if rolled over (e.g. 31st on a 30-day month)
-      if (dueDateThisMonth.getMonth() !== month) {
-        dueDateThisMonth.setDate(0);
-      }
-      dueDateThisMonth.setHours(0, 0, 0, 0);
-
-      // Get latest payment's rent_end_date
-      const latestPayment = tenant.payments.length > 0
-        ? tenant.payments[tenant.payments.length - 1]
-        : null;
-      
-      const rentEndDate = latestPayment ? new Date(latestPayment.rent_end_date) : new Date(entryDate);
-      rentEndDate.setHours(0, 0, 0, 0);
-
-      const isPaid = rentEndDate > dueDateThisMonth;
-
-      if (isPaid) {
-        // Find which payment covered this cycle
-        const coveringPayment = tenant.payments.find(p => new Date(p.rent_end_date) > dueDateThisMonth);
-        if (coveringPayment) {
-          const transferDate = new Date(coveringPayment.transfer_date);
-          transferDate.setHours(0, 0, 0, 0);
-          
-          // Grace period is due date + 7 days
-          const gracePeriod = new Date(dueDateThisMonth);
-          gracePeriod.setDate(gracePeriod.getDate() + 7);
-          
-          return transferDate <= gracePeriod ? "TEPAT" : "TELAT";
-        }
-        return "TEPAT";
-      } else {
-        // Not paid
-        if (today < dueDateThisMonth) return "—";
-        return "BELUM BAYAR";
-      }
+    const periods = tenant.payments.map(p => {
+      const duration = Math.max(1, Math.round(p.rent_duration_months))
+      const start = monthKey(new Date(p.rent_end_date)) - duration
+      const transferDate = new Date(p.transfer_date)
+      transferDate.setHours(0, 0, 0, 0)
+      return { start, end: start + duration, transferDate }
     })
 
-    // Get latest payment for akhir sewa
-    const latestPayment = tenant.payments.length > 0
-      ? tenant.payments[tenant.payments.length - 1]
-      : null
+    const statusFor = (year: number, month: number) => {
+      const key = year * 12 + month
+      // Belum masuk / sudah keluar sebelum bulan ini → KOSONG
+      if (key < monthKey(entryDate)) return "KOSONG"
+      if (exitDate && key > monthKey(exitDate)) return "KOSONG"
 
-    // Status bulan ini (current month)
-    const currentMonth = today.getMonth()
-    const currentYear = today.getFullYear()
-    
-    const entryDay = new Date(tenant.entry_date).getDate();
-    const currentDueDate = new Date(currentYear, currentMonth, entryDay);
-    if (currentDueDate.getMonth() !== currentMonth) currentDueDate.setDate(0);
-    currentDueDate.setHours(0, 0, 0, 0);
-
-    const rentEndDate = latestPayment ? new Date(latestPayment.rent_end_date) : new Date(tenant.entry_date);
-    rentEndDate.setHours(0, 0, 0, 0);
-
-    let currentStatus = "BELUM BAYAR";
-    if (rentEndDate > currentDueDate) {
-       const coveringPayment = tenant.payments.find(p => new Date(p.rent_end_date) > currentDueDate);
-       if (coveringPayment) {
-         const transferDate = new Date(coveringPayment.transfer_date);
-         transferDate.setHours(0, 0, 0, 0);
-         const gracePeriod = new Date(currentDueDate);
-         gracePeriod.setDate(gracePeriod.getDate() + 7);
-         currentStatus = transferDate <= gracePeriod ? "TEPAT" : "TELAT";
-       } else {
-         currentStatus = "TEPAT";
-       }
-    } else {
-       // "Belum tempo" hanya kalau jatuh tempo bulan ini belum lewat DAN tidak ada tunggakan
-       // (masa sewa belum habis). Kalau masa sewa sudah habis, berarti masih menunggak
-       // bulan sebelumnya — sama dengan hitungan "Menunggak" di Dashboard.
-       if (today < currentDueDate && rentEndDate >= today) currentStatus = "—";
+      const covering = periods.find(p => key >= p.start && key < p.end)
+      if (covering) {
+        const deadline = new Date(year, month, 7)
+        return covering.transferDate <= deadline ? "TEPAT" : "TELAT"
+      }
+      return today >= new Date(year, month, 1) ? "BELUM BAYAR" : "—"
     }
+
+    const statusPerMonth = months.map(({ year, month }) => statusFor(year, month))
+
+    // Pembayaran dengan akhir sewa paling jauh
+    const latestPayment = tenant.payments.reduce<(typeof tenant.payments)[number] | null>(
+      (latest, p) => (!latest || p.rent_end_date > latest.rent_end_date ? p : latest),
+      null
+    )
+
+    const currentStatus = statusFor(today.getFullYear(), today.getMonth())
 
     return {
       id: tenant.id,
@@ -167,9 +115,9 @@ export default async function MonitoringPage() {
       />
 
       <div className="grid gap-4 sm:grid-cols-3">
-        <StatCard label="Tepat waktu bulan ini" icon={CheckCircle2} tone="success" value={countNow("TEPAT")} hint="Sudah bayar sebelum batas 7 hari" />
-        <StatCard label="Telat bulan ini" icon={Clock3} tone="warning" value={countNow("TELAT")} hint="Bayar lewat dari 7 hari" />
-        <StatCard label="Belum bayar" icon={XCircle} tone={countNow("BELUM BAYAR") > 0 ? "danger" : "neutral"} value={countNow("BELUM BAYAR")} hint="Masa sewa sudah habis, termasuk tunggakan bulan lalu" />
+        <StatCard label="Tepat waktu bulan ini" icon={CheckCircle2} tone="success" value={countNow("TEPAT")} hint="Bayar paling lambat tanggal 7" />
+        <StatCard label="Telat bulan ini" icon={Clock3} tone="warning" value={countNow("TELAT")} hint="Bayar lewat dari tanggal 7" />
+        <StatCard label="Belum bayar" icon={XCircle} tone={countNow("BELUM BAYAR") > 0 ? "danger" : "neutral"} value={countNow("BELUM BAYAR")} hint="Belum ada pembayaran untuk bulan ini" />
       </div>
 
       <MonitoringGrid rows={rows} months={months.map(m => m.label)} />

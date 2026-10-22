@@ -4,6 +4,14 @@ Catatan kronologis semua perubahan, penambahan fitur, dan pemeliharaan pada sist
 
 ---
 
+## 📅 Kamis, 22 Oktober 2026
+**Status:** Monitoring Sewa disamakan dengan Excel
+
+### 🔧 Diubah (Changed)
+- **Monitoring Sewa** kini memakai aturan sheet "Monitoring Sewa" di `Master Data Kontrakan.xlsm`: batas bayar **tanggal 7 setiap bulan untuk semua unit** (bukan lagi tanggal masuk + 7 hari). Tiap pembayaran dipetakan ke bulan periodenya (bulan akhir sewa − durasi); transfer ≤ tgl 7 → Tepat, lewat → Telat, bulan berjalan tanpa pembayaran → Belum bayar.
+
+---
+
 ## 📅 Selasa, 13 Oktober 2026
 **Status:** Rombak total UI (branch `ui-overhaul`)
 

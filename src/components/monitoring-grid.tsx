@@ -18,7 +18,7 @@ type Row = {
 
 const STATUS = {
   TEPAT: { label: "Tepat waktu", icon: Check, cell: "bg-success text-white dark:text-emerald-950", pill: "bg-success-soft text-success" },
-  TELAT: { label: "Telat (> 7 hari)", icon: Clock3, cell: "bg-warning text-white dark:text-amber-950", pill: "bg-warning-soft text-warning" },
+  TELAT: { label: "Telat (> tgl 7)", icon: Clock3, cell: "bg-warning text-white dark:text-amber-950", pill: "bg-warning-soft text-warning" },
   "BELUM BAYAR": { label: "Belum bayar", icon: X, cell: "bg-danger text-white dark:text-red-950", pill: "bg-danger-soft text-danger" },
   KOSONG: { label: "Belum menghuni", icon: Minus, cell: "bg-muted text-muted-foreground/50", pill: "bg-muted text-muted-foreground" },
   "—": { label: "Belum jatuh tempo", icon: Minus, cell: "bg-muted/60 text-muted-foreground/40", pill: "bg-muted text-muted-foreground" },
@@ -104,7 +104,7 @@ export function MonitoringGrid({ rows, months }: { rows: Row[]; months: string[]
                   <td className="border-b px-3 py-2.5 text-center transition-colors group-hover:bg-muted/50">
                     <span className={cn("inline-flex h-6 items-center gap-1 rounded-full px-2.5 text-xs font-semibold whitespace-nowrap", current.pill)}>
                       <current.icon className="size-3" strokeWidth={3} />
-                      {row.currentStatus === "—" ? "Belum tempo" : current.label.replace(" (> 7 hari)", "")}
+                      {row.currentStatus === "—" ? "Belum tempo" : current.label.replace(" (> tgl 7)", "")}
                     </span>
                   </td>
                   <td className="border-b px-3 py-2.5 transition-colors group-hover:bg-muted/50">
