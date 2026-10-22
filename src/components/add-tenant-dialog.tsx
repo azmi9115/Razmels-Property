@@ -92,7 +92,8 @@ export function AddTenantDialog({ availableBuildings }: { availableBuildings: an
             </div>
             <div className="space-y-2">
               <Label htmlFor="building_id">Pilih Kamar</Label>
-              <Select name="building_id">
+              {/* items: supaya yang tampil di tombol "BA-5 (Kamar)", bukan ID unit */}
+              <Select name="building_id" items={Object.fromEntries(availableBuildings.map((b) => [b.id, `${b.code} (${b.type})`]))}>
                 <SelectTrigger>
                   <SelectValue placeholder="Pilih Kamar" />
                 </SelectTrigger>
