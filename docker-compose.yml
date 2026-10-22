@@ -10,6 +10,8 @@ services:
       - razmels-data:/app/prisma
     environment:
       - DATABASE_URL=file:/app/prisma/dev.db
+      # Tanggal disimpan sebagai tengah malam WIB; tanpa TZ ini server (UTC) membaca tanggal 1 sebagai tanggal 31
+      - TZ=Asia/Jakarta
       - NEXTAUTH_URL=https://razmels.com
       - NEXTAUTH_SECRET=ba0437937f1824a7900479414cc402dd41f1351142cb262a3b8963eea7022200
 

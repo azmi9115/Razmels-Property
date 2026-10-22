@@ -26,6 +26,8 @@ WORKDIR /app
 RUN apt-get update && apt-get install -y sqlite3 && rm -rf /var/lib/apt/lists/*
 
 ENV NODE_ENV=production
+# Semua perhitungan tanggal (jatuh tempo, monitoring) memakai waktu Indonesia
+ENV TZ=Asia/Jakarta
 ENV PORT=3000
 
 # Copy necessary files from builder
