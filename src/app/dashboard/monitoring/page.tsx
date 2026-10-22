@@ -48,7 +48,8 @@ export default async function MonitoringPage() {
   // Aturan sama dengan sheet "Monitoring Sewa" di Master Data Kontrakan.xlsm:
   // - Tiap pembayaran milik satu periode bulan (ID Excel "KODE MMM YY"). Periode awal
   //   = bulan rent_end_date dikurangi durasi; pembayaran multi-bulan menutup beberapa bulan.
-  // - Batas bayar = tanggal 7 bulan itu untuk SEMUA unit (bukan tanggal masuk).
+  // - Batas bayar = tanggal 7 bulan itu untuk SEMUA unit (bukan tanggal masuk), kecuali
+  //   bulan pertama penghuni yang masuk setelah tgl 7: batasnya tanggal masuk.
   //   Transfer ≤ tgl 7 → TEPAT, lewat → TELAT.
   // - Bulan yang sudah mulai tapi belum ada pembayarannya → BELUM BAYAR.
   const monthKey = (d: Date) => d.getFullYear() * 12 + d.getMonth()
@@ -75,7 +76,11 @@ export default async function MonitoringPage() {
 
       const covering = periods.find(p => key >= p.start && key < p.end)
       if (covering) {
-        const deadline = new Date(year, month, 7)
+        // Bulan pertama: penghuni yang masuk setelah tgl 7 dianggap tepat kalau bayar
+        // paling lambat tanggal masuknya
+        const deadline = key === monthKey(entryDate) && entryDate.getDate() > 7
+          ? entryDate
+          : new Date(year, month, 7)
         return covering.transferDate <= deadline ? "TEPAT" : "TELAT"
       }
       return today >= new Date(year, month, 1) ? "BELUM BAYAR" : "—"
