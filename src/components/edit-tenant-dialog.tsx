@@ -67,7 +67,7 @@ export function EditTenantDialog({
 
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
-      <DialogContent className="sm:max-w-[425px]">
+      <DialogContent className="sm:max-w-[520px]">
         <DialogHeader>
           <DialogTitle>Edit Penghuni</DialogTitle>
           <DialogDescription>
@@ -115,7 +115,7 @@ export function EditTenantDialog({
               <input type="hidden" name="building_id" value={selectedBuildingId || ""} />
               <Select value={selectedBuildingId} onValueChange={(val) => val && setSelectedBuildingId(val)}>
                 <SelectTrigger>
-                  <span data-slot="select-value" className="flex flex-1 text-left line-clamp-1">
+                  <span data-slot="select-value" className="!block min-w-0 flex-1 truncate text-left">
                     {selectedBuildingId
                       ? (selectedBuildingId === defaultValues.building_id && defaultValues.building
                           ? `${defaultValues.building.code} (${defaultValues.building.type})`

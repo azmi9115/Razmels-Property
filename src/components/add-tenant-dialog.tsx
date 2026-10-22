@@ -47,7 +47,7 @@ export function AddTenantDialog({ availableBuildings }: { availableBuildings: an
         <Plus className="h-4 w-4" />
         <span>Tambah Penghuni</span>
       </DialogTrigger>
-      <DialogContent className="sm:max-w-[425px]">
+      <DialogContent className="sm:max-w-[520px]">
         <DialogHeader>
           <DialogTitle>Tambah Penghuni Baru</DialogTitle>
           <DialogDescription>
@@ -95,7 +95,7 @@ export function AddTenantDialog({ availableBuildings }: { availableBuildings: an
               {/* items: supaya yang tampil di tombol "BA-5 (Kamar)", bukan ID unit */}
               <Select name="building_id" items={Object.fromEntries(availableBuildings.map((b) => [b.id, `${b.code} (${b.type})`]))}>
                 <SelectTrigger>
-                  <SelectValue placeholder="Pilih Kamar" />
+                  <SelectValue placeholder="Pilih Kamar" className="!block truncate" />
                 </SelectTrigger>
                 <SelectContent>
                   {availableBuildings.map((b) => (
