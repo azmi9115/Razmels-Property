@@ -1,6 +1,5 @@
 "use client"
 
-import { useEffect, useRef } from "react"
 import { Bar, BarChart, CartesianGrid, Cell, ReferenceLine, ResponsiveContainer, Tooltip, XAxis, YAxis } from "recharts"
 import { formatPercent, formatRupiah } from "@/lib/format"
 
@@ -43,11 +42,6 @@ function Row({ label, value, strong }: { label: string; value: string; strong?: 
 // Satu sumbu saja: margin % per bulan. Untung = hijau, rugi = merah.
 // (Nominal pemasukan/pengeluaran ada di grafik arus kas terpisah — bukan dual-axis.)
 export function MarginChart({ data }: { data: MarginPoint[] }) {
-  const scrollRef = useRef<HTMLDivElement>(null)
-  useEffect(() => {
-    const el = scrollRef.current
-    if (el) el.scrollLeft = el.scrollWidth
-  }, [data.length])
   if (data.length === 0) {
     return <div className="flex h-full w-full items-center justify-center text-sm text-muted-foreground">Belum ada data transaksi</div>
   }
@@ -55,7 +49,7 @@ export function MarginChart({ data }: { data: MarginPoint[] }) {
   const minWidth = data.length * 44
 
   return (
-    <div ref={scrollRef} className="thin-scrollbar h-full w-full overflow-x-auto overflow-y-hidden">
+    <div className="thin-scrollbar h-full w-full overflow-x-auto overflow-y-hidden">
       <div className="h-full" style={{ minWidth }}>
         <ResponsiveContainer width="100%" height="100%" minHeight={0} minWidth={0}>
           <BarChart data={data} margin={{ top: 8, right: 4, left: 4, bottom: 0 }} barCategoryGap="30%">

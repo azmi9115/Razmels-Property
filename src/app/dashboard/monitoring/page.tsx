@@ -120,7 +120,7 @@ export default async function MonitoringPage() {
         <StatCard label="Belum bayar" icon={XCircle} tone={countNow("BELUM BAYAR") > 0 ? "danger" : "neutral"} value={countNow("BELUM BAYAR")} hint="Belum ada pembayaran untuk bulan ini" />
       </div>
 
-      <MonitoringGrid rows={rows} months={months.map(m => m.label)} />
+      <MonitoringGrid rows={rows} months={months.map(m => m.label)} currentMonth={formatMonthShort(today.getFullYear(), today.getMonth())} />
     </div>
   )
 }

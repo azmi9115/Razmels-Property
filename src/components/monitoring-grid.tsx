@@ -48,7 +48,8 @@ export function MonitoringLegend() {
   )
 }
 
-export function MonitoringGrid({ rows, months }: { rows: Row[]; months: string[] }) {
+export function MonitoringGrid({ rows, months, currentMonth }: { rows: Row[]; months: string[]; currentMonth: string }) {
+  const today = new Date()
   if (rows.length === 0) {
     return (
       <section className="surface">
@@ -68,6 +69,7 @@ export function MonitoringGrid({ rows, months }: { rows: Row[]; months: string[]
               </th>
               <th className="border-b px-3 py-3 text-center text-[11px] font-semibold tracking-[0.06em] whitespace-nowrap text-muted-foreground uppercase">
                 Bulan ini
+                <span className="block font-normal tracking-normal normal-case">{currentMonth}</span>
               </th>
               <th className="border-b px-3 py-3 text-center text-[11px] font-semibold tracking-[0.06em] text-muted-foreground uppercase">
                 Ketepatan
@@ -88,6 +90,8 @@ export function MonitoringGrid({ rows, months }: { rows: Row[]; months: string[]
               const counted = row.statusPerMonth.filter((s) => s === "TEPAT" || s === "TELAT" || s === "BELUM BAYAR")
               const onTime = counted.filter((s) => s === "TEPAT").length
               const score = counted.length > 0 ? Math.round((onTime / counted.length) * 100) : null
+              const entry = new Date(row.tglMasuk)
+              const isNew = entry.getFullYear() === today.getFullYear() && entry.getMonth() === today.getMonth()
               return (
                 <tr key={row.id} className="group">
                   <td className="sticky left-0 z-10 border-b bg-card px-4 py-2.5 transition-colors group-hover:bg-muted">
@@ -106,6 +110,7 @@ export function MonitoringGrid({ rows, months }: { rows: Row[]; months: string[]
                       <current.icon className="size-3" strokeWidth={3} />
                       {row.currentStatus === "—" ? "Belum tempo" : current.label.replace(" (> tgl 7)", "")}
                     </span>
+                    {isNew && <p className="mt-1 text-[11px] text-muted-foreground">Baru masuk {formatDate(row.tglMasuk)}</p>}
                   </td>
                   <td className="border-b px-3 py-2.5 transition-colors group-hover:bg-muted/50">
                     {score === null ? (

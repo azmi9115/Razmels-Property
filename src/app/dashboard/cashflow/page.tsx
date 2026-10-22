@@ -90,6 +90,8 @@ export default async function CashflowPage(props: { searchParams?: Promise<{ pag
   });
 
   const latestMonth = marginChartData[marginChartData.length - 1]
+  // Grafik dimulai dari bulan terbaru di kiri, supaya tidak perlu digeser dulu
+  const newestFirst = [...marginChartData].reverse()
   const currentHealth = marginHealth(latestMonth?.marginPercentage ?? 0)
 
   const currentYearStr = String(now.getFullYear()).slice(-2)
@@ -147,12 +149,12 @@ export default async function CashflowPage(props: { searchParams?: Promise<{ pag
         <Panel
           className="xl:col-span-3"
           title="Arus kas per bulan"
-          description="Seluruh riwayat — geser ke samping untuk bulan lama"
+          description="Terbaru di kiri — geser ke samping untuk bulan lama"
           icon={TrendingUp}
           actions={<CashflowLegend data={marginChartData} />}
         >
           <div className="h-[300px]">
-            <CashflowChart data={marginChartData} minPointWidth={56} />
+            <CashflowChart data={newestFirst} minPointWidth={56} />
           </div>
         </Panel>
 
@@ -169,7 +171,7 @@ export default async function CashflowPage(props: { searchParams?: Promise<{ pag
             <MiniStat label="Rata-rata semua" value={formatPercent(averageAllTimeMargin, 1)} />
           </div>
           <div className="h-[220px]">
-            <MarginChart data={marginChartData} />
+            <MarginChart data={newestFirst} />
           </div>
         </Panel>
       </div>

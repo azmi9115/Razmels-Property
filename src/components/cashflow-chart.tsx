@@ -1,6 +1,5 @@
 "use client"
 
-import { useEffect, useRef } from "react"
 import { Bar, BarChart, CartesianGrid, ResponsiveContainer, Tooltip, XAxis, YAxis } from "recharts"
 import { formatRupiah, formatRupiahCompact } from "@/lib/format"
 
@@ -61,11 +60,6 @@ export function CashflowLegend({ data }: { data: CashflowPoint[] }) {
 }
 
 export function CashflowChart({ data, minPointWidth = 0 }: { data: CashflowPoint[]; minPointWidth?: number }) {
-  const scrollRef = useRef<HTMLDivElement>(null)
-  useEffect(() => {
-    const el = scrollRef.current
-    if (el) el.scrollLeft = el.scrollWidth
-  }, [data.length])
   if (data.length === 0) {
     return <div className="flex h-full w-full items-center justify-center text-sm text-muted-foreground">Belum ada data transaksi</div>
   }
@@ -74,7 +68,7 @@ export function CashflowChart({ data, minPointWidth = 0 }: { data: CashflowPoint
   const minWidth = minPointWidth > 0 ? data.length * minPointWidth : 0
 
   return (
-    <div ref={scrollRef} className="thin-scrollbar h-full w-full overflow-x-auto overflow-y-hidden">
+    <div className="thin-scrollbar h-full w-full overflow-x-auto overflow-y-hidden">
       <div className="h-full" style={{ minWidth: minWidth || undefined }}>
         <ResponsiveContainer width="100%" height="100%" minHeight={0} minWidth={0}>
           <BarChart data={data} margin={{ top: 8, right: 4, left: 4, bottom: 0 }} barGap={2} barCategoryGap="28%">
