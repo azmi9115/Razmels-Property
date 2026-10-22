@@ -137,7 +137,10 @@ export default async function MonitoringPage() {
          currentStatus = "TEPAT";
        }
     } else {
-       if (today < currentDueDate) currentStatus = "—";
+       // "Belum tempo" hanya kalau jatuh tempo bulan ini belum lewat DAN tidak ada tunggakan
+       // (masa sewa belum habis). Kalau masa sewa sudah habis, berarti masih menunggak
+       // bulan sebelumnya — sama dengan hitungan "Menunggak" di Dashboard.
+       if (today < currentDueDate && rentEndDate >= today) currentStatus = "—";
     }
 
     return {
@@ -166,7 +169,7 @@ export default async function MonitoringPage() {
       <div className="grid gap-4 sm:grid-cols-3">
         <StatCard label="Tepat waktu bulan ini" icon={CheckCircle2} tone="success" value={countNow("TEPAT")} hint="Sudah bayar sebelum batas 7 hari" />
         <StatCard label="Telat bulan ini" icon={Clock3} tone="warning" value={countNow("TELAT")} hint="Bayar lewat dari 7 hari" />
-        <StatCard label="Belum bayar" icon={XCircle} tone={countNow("BELUM BAYAR") > 0 ? "danger" : "neutral"} value={countNow("BELUM BAYAR")} hint="Sudah lewat tanggal jatuh tempo" />
+        <StatCard label="Belum bayar" icon={XCircle} tone={countNow("BELUM BAYAR") > 0 ? "danger" : "neutral"} value={countNow("BELUM BAYAR")} hint="Masa sewa sudah habis, termasuk tunggakan bulan lalu" />
       </div>
 
       <MonitoringGrid rows={rows} months={months.map(m => m.label)} />
