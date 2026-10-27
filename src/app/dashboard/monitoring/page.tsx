@@ -45,12 +45,15 @@ export default async function MonitoringPage() {
   const today = new Date()
   today.setHours(0, 0, 0, 0)
 
+  // Aturan monitoring:
   // - Tiap pembayaran milik satu periode bulan (seperti ID Excel "KODE MMM YY"). Periode awal
   //   = bulan rent_end_date dikurangi durasi; pembayaran multi-bulan menutup beberapa bulan.
-  // - Jatuh tempo = tanggal masuk penghuni di bulan itu (tgl 31 → akhir bulan).
-  //   Transfer ≤ jatuh tempo → TEPAT, lewat → TELAT.
-  // - Sudah lewat jatuh tempo tapi belum ada pembayaran → BELUM BAYAR; sebelum itu "—".
+  // - Batas bayar = tanggal masuk penghuni di bulan itu (masuk tgl 11 → bayar tiap tgl 11,
+  //   dipotong ke akhir bulan kalau bulannya lebih pendek). Transfer ≤ batas → TEPAT, lewat → TELAT.
+  // - Batas sudah lewat tapi belum ada pembayaran → BELUM BAYAR; belum lewat → belum tempo.
   const monthKey = (d: Date) => d.getFullYear() * 12 + d.getMonth()
+  const dueDateIn = (year: number, month: number, day: number) =>
+    new Date(year, month, Math.min(day, new Date(year, month + 1, 0).getDate()))
 
   const rows = tenants.map(tenant => {
     const entryDate = new Date(tenant.entry_date)
@@ -72,12 +75,10 @@ export default async function MonitoringPage() {
       if (key < monthKey(entryDate)) return "KOSONG"
       if (exitDate && key > monthKey(exitDate)) return "KOSONG"
 
-      const lastDay = new Date(year, month + 1, 0).getDate()
-      const dueDate = new Date(year, month, Math.min(entryDate.getDate(), lastDay))
-
+      const deadline = dueDateIn(year, month, entryDate.getDate())
       const covering = periods.find(p => key >= p.start && key < p.end)
-      if (covering) return covering.transferDate <= dueDate ? "TEPAT" : "TELAT"
-      return today > dueDate ? "BELUM BAYAR" : "—"
+      if (covering) return covering.transferDate <= deadline ? "TEPAT" : "TELAT"
+      return today > deadline ? "BELUM BAYAR" : "—"
     }
 
     const statusPerMonth = months.map(({ year, month }) => statusFor(year, month))
@@ -116,7 +117,7 @@ export default async function MonitoringPage() {
       <div className="grid gap-4 sm:grid-cols-3">
         <StatCard label="Tepat waktu bulan ini" icon={CheckCircle2} tone="success" value={countNow("TEPAT")} hint="Bayar paling lambat tanggal masuk" />
         <StatCard label="Telat bulan ini" icon={Clock3} tone="warning" value={countNow("TELAT")} hint="Bayar lewat dari tanggal masuk" />
-        <StatCard label="Belum bayar" icon={XCircle} tone={countNow("BELUM BAYAR") > 0 ? "danger" : "neutral"} value={countNow("BELUM BAYAR")} hint="Sudah lewat tanggal masuk, belum bayar" />
+        <StatCard label="Belum bayar" icon={XCircle} tone={countNow("BELUM BAYAR") > 0 ? "danger" : "neutral"} value={countNow("BELUM BAYAR")} hint="Sudah lewat tanggal masuk, belum ada pembayaran" />
       </div>
 
       <MonitoringGrid rows={rows} months={months.map(m => m.label)} currentMonth={formatMonthShort(today.getFullYear(), today.getMonth())} />
