@@ -2,6 +2,7 @@
 
 import prisma from "@/lib/prisma"
 import { revalidatePath } from "next/cache"
+import { cashflowCategoryForBuilding } from "@/lib/business"
 
 export async function createPayment(formData: FormData) {
   try {
@@ -67,7 +68,7 @@ export async function createPayment(formData: FormData) {
     await prisma.cashflow.create({
       data: {
         type: "Pemasukan",
-        category: "Sewa Kamar",
+        category: cashflowCategoryForBuilding(tenant.building),
         transaction_date: t_date,
         description: `Pembayaran sewa dari ${tenant.name} (Kamar: ${buildingCode}) untuk ${rent_duration_months} bulan`,
         amount: amount
@@ -77,6 +78,7 @@ export async function createPayment(formData: FormData) {
     revalidatePath("/dashboard")
     revalidatePath("/dashboard/payments")
     revalidatePath("/dashboard/cashflow")
+    revalidatePath("/dashboard/bisnis")
     
     return { success: true }
   } catch (error: any) {

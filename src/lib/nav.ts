@@ -1,4 +1,4 @@
-import { BarChart3, Building2, CreditCard, LayoutDashboard, ShieldCheck, Users, Wallet, type LucideIcon } from "lucide-react"
+import { BarChart3, Briefcase, Building2, CreditCard, FileSpreadsheet, LayoutDashboard, ShieldCheck, Users, ScanSearch, Wallet, type LucideIcon } from "lucide-react"
 
 export type Role = "OWNER" | "ADMIN"
 
@@ -37,12 +37,15 @@ export const navGroups: NavGroup[] = [
     ownerOnly: true,
     items: [
       { title: "Cash Flow", url: "/dashboard/cashflow", icon: Wallet, description: "Buku besar pemasukan & pengeluaran" },
+      { title: "Laporan Bisnis", url: "/dashboard/bisnis", icon: Briefcase, description: "Pendapatan sewa & biaya operasional saja" },
+      { title: "Transparansi Keuangan", url: "/dashboard/transparansi", icon: ScanSearch, description: "Analisis otomatis, alur laba ke aset & transaksi yang perlu dicek" },
     ],
   },
   {
     label: "Administrasi",
     ownerOnly: true,
     items: [
+      { title: "Update dari Excel", url: "/dashboard/update-excel", icon: FileSpreadsheet, description: "Upload Excel manager ops, cek perubahan, lalu verifikasi" },
       { title: "Manajemen Staf", url: "/dashboard/users", icon: ShieldCheck, description: "Akun & hak akses pengguna" },
     ],
   },
@@ -59,4 +62,9 @@ export function isNavActive(pathname: string, url: string): boolean {
 
 export function findNavItem(pathname: string): NavItem | undefined {
   return navGroups.flatMap((g) => g.items).find((item) => isNavActive(pathname, item.url))
+}
+
+// Halaman khusus OWNER (grup ownerOnly di atas) — dipakai proxy.ts supaya staf tidak bisa membuka lewat URL langsung
+export function isOwnerOnlyPath(pathname: string): boolean {
+  return navGroups.some((g) => g.ownerOnly && g.items.some((item) => isNavActive(pathname, item.url)))
 }

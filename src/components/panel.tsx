@@ -9,6 +9,7 @@ export function Panel({
   children,
   className,
   bodyClassName,
+  id,
 }: {
   title?: React.ReactNode
   description?: React.ReactNode
@@ -17,9 +18,10 @@ export function Panel({
   children: React.ReactNode
   className?: string
   bodyClassName?: string
+  id?: string
 }) {
   return (
-    <section className={cn("surface flex flex-col", className)}>
+    <section id={id} className={cn("surface flex flex-col", className)}>
       {(title || actions) && (
         <header className="flex flex-col gap-3 px-5 pt-5 sm:flex-row sm:items-start sm:justify-between">
           <div className="flex min-w-0 items-start gap-3">

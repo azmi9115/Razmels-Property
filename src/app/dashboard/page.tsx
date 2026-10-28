@@ -26,6 +26,8 @@ import { EmptyState } from "@/components/empty-state"
 import { BreakdownList } from "@/components/breakdown-list"
 import { OccupancyRing } from "@/components/occupancy-ring"
 import { CashflowChart, CashflowLegend } from "@/components/cashflow-chart"
+import { InsightList } from "@/components/insight-list"
+import { loadAnalysis } from "@/lib/insights"
 import { buttonVariants } from "@/components/ui/button"
 import { dueLabel, getDueInfo, startOfToday } from "@/lib/rent"
 import {
@@ -58,13 +60,14 @@ export default async function DashboardPage() {
   const session = await getServerSession(authOptions)
   const firstName = (session?.user?.name ?? "").split(" ")[0] || "Admin"
 
-  const [allBuildings, cashflows, activeTenantRows] = await Promise.all([
+  const [allBuildings, cashflows, activeTenantRows, analysis] = await Promise.all([
     prisma.building.findMany(),
     prisma.cashflow.findMany({ orderBy: { transaction_date: "asc" } }),
     prisma.tenant.findMany({
       where: { status: "Active" },
       include: { building: true, payments: { orderBy: { rent_end_date: "desc" }, take: 1 } },
     }),
+    loadAnalysis(),
   ])
 
   // ── Okupansi ───────────────────────────────────────────────
@@ -266,10 +269,24 @@ export default async function DashboardPage() {
         />
       </div>
 
+      {/* ── Analisis otomatis ─────────────────────────────── */}
+      <Panel
+        title="Analisis otomatis"
+        description="Kesimpulan dari data tahun ini — termasuk transaksi yang kemungkinan salah catat"
+        icon={Sparkles}
+        actions={
+          <Link href="/dashboard/transparansi" className={buttonVariants({ variant: "outline", size: "sm" })}>
+            Lihat semua <ArrowRight className="size-3.5" />
+          </Link>
+        }
+      >
+        <InsightList insights={analysis.insights} limit={4} />
+      </Panel>
+
       {/* ── Perlu tindakan + grafik ─────────────────────────── */}
       <div className="grid gap-4 xl:grid-cols-5">
         <Panel
-          className="xl:col-span-2"
+          className="min-w-0 xl:col-span-2"
           title="Perlu ditagih"
           description="Penghuni yang telat atau jatuh tempo minggu ini"
           icon={HandCoins}
@@ -330,7 +347,7 @@ export default async function DashboardPage() {
         </Panel>
 
         <Panel
-          className="xl:col-span-3"
+          className="min-w-0 xl:col-span-3"
           title="Arus kas 6 bulan"
           description="Pemasukan dan pengeluaran per bulan"
           icon={TrendingUp}

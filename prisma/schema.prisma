@@ -74,6 +74,20 @@ model Cashflow {
   description      String
   amount           Float
   createdAt        DateTime @default(now())
+
+  reviews          CashflowReview[]
+}
+
+// Temuan "Perlu dicek" yang sudah ditinjau pemilik dan dinyatakan benar, tidak ditandai lagi
+model CashflowReview {
+  id          String   @id @default(uuid())
+  cashflow_id String
+  rule        String
+  createdAt   DateTime @default(now())
+
+  cashflow    Cashflow @relation(fields: [cashflow_id], references: [id], onDelete: Cascade)
+
+  @@unique([cashflow_id, rule])
 }
 
 model User {
@@ -91,4 +105,16 @@ model FinancialSnapshot {
   total_investasi   Float    @default(0)
   total_rekening    Float    @default(0)
   updated_at        DateTime @default(now())
+}
+
+// Ajaran pemilik: transaksi non-bisnis yang deskripsinya mengandung `keyword` masuk ke kelompok `group`
+// (mengalahkan aturan bawaan di src/lib/allocation.ts)
+model GroupRule {
+  id        String   @id @default(uuid())
+  type      String   // "Pemasukan" | "Pengeluaran"
+  keyword   String   // huruf kecil
+  group     String
+  createdAt DateTime @default(now())
+
+  @@unique([type, keyword])
 }

@@ -1,5 +1,6 @@
 import { NextRequest, NextResponse } from "next/server";
 import prisma from "@/lib/prisma";
+import { cashflowCategoryForBuilding } from "@/lib/business";
 
 export async function POST(req: NextRequest) {
   try {
@@ -38,7 +39,7 @@ export async function POST(req: NextRequest) {
         const cashflow = await tx.cashflow.create({
           data: {
             type: "Pemasukan",
-            category: "Sewa",
+            category: cashflowCategoryForBuilding(payment.tenant.building),
             transaction_date: new Date(p.transfer_date),
             description: `Pembayaran sewa dari ${payment.tenant.name} (${
               payment.tenant.building?.code || "Kamar/Kios"

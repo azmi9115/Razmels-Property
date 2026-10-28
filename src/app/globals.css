@@ -223,6 +223,14 @@
   }
 }
 
+/* Bisa digeser tanpa scrollbar terlihat (deret tab tahun, sidebar) */
+@utility no-scrollbar {
+  scrollbar-width: none;
+  &::-webkit-scrollbar {
+    display: none;
+  }
+}
+
 @keyframes wave {
   0%, 60%, 100% { transform: rotate(0deg); }
   10%, 30% { transform: rotate(14deg); }
@@ -242,4 +250,28 @@
   [data-slot="sidebar-inset"] {
     background: #ffffff !important;
   }
+
+  /* Laporan Tahunan: A4, skala huruf diperkecil (semua ukuran berbasis rem ikut mengecil) */
+  html:has(.print-report) {
+    font-size: 10px;
+  }
+  html:has(.print-report) [data-slot="sidebar-inset"] > div {
+    padding: 0 !important;
+    max-width: none !important;
+  }
+  .print-report {
+    print-color-adjust: exact;
+    -webkit-print-color-adjust: exact;
+  }
+  .print-report tr {
+    break-inside: avoid;
+  }
+  .print-report h2 {
+    break-after: avoid;
+  }
+}
+
+@page {
+  size: A4;
+  margin: 12mm 12mm 14mm;
 }

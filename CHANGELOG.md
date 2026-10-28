@@ -4,6 +4,22 @@ Catatan kronologis semua perubahan, penambahan fitur, dan pemeliharaan pada sist
 
 ---
 
+## 📅 Rabu, 28 Oktober 2026
+**Status:** Laporan, transparansi keuangan, dan update data dari Excel
+
+### ✨ Ditambahkan (Added)
+- **Update dari Excel** (Administrasi, khusus pemilik): unggah Excel manager ops, lalu sistem menampilkan data baru, data yang berubah (lama → baru), dan data yang hanya ada di web. Pemilik mencentang perubahan yang benar, lalu klik "Verifikasi & update data". Database dicadangkan otomatis ke `prisma/backups/` (10 terakhir) dan perubahan diterapkan sekaligus atau dibatalkan semua kalau ada yang gagal. Baris Excel yang salah tulis didaftar di "Perlu dirapikan di Excel".
+- **Laporan Bisnis** dan **Laporan Tahunan** dengan tata letak siap cetak.
+- **Transparansi Keuangan**: daftar transaksi janggal, insight, dan tombol "Sudah benar" (tabel `CashflowReview`).
+- **Ajari sistem**: aturan pengelompokan transaksi yang bisa disimpan pemilik (tabel `GroupRule`).
+- **Peringatan saat input transaksi**: transaksi yang janggal dicek dulu sebelum disimpan.
+- **Tombol Ubah** di daftar transaksi Cash Flow.
+
+### 🛠️ Diperbaiki (Fixed)
+- Pengamanan API dan aksi khusus pemilik (ekspor dan pembayaran massal wajib login).
+
+---
+
 ## 📅 Kamis, 22 Oktober 2026
 **Status:** Monitoring Sewa disamakan dengan Excel
 

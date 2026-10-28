@@ -147,7 +147,7 @@ export default async function CashflowPage(props: { searchParams?: Promise<{ pag
 
       <div className="grid gap-4 xl:grid-cols-5">
         <Panel
-          className="xl:col-span-3"
+          className="min-w-0 xl:col-span-3"
           title="Arus kas per bulan"
           description="Terbaru di kiri — geser ke samping untuk bulan lama"
           icon={TrendingUp}
@@ -159,7 +159,7 @@ export default async function CashflowPage(props: { searchParams?: Promise<{ pag
         </Panel>
 
         <Panel
-          className="xl:col-span-2"
+          className="min-w-0 xl:col-span-2"
           title="Margin keuntungan"
           description="Persentase laba tiap bulan"
           icon={Gauge}
@@ -206,7 +206,7 @@ export default async function CashflowPage(props: { searchParams?: Promise<{ pag
                     <TableHead>Deskripsi</TableHead>
                     <TableHead className="text-right">Nominal</TableHead>
                     <TableHead className="text-right">Saldo</TableHead>
-                    <TableHead className="w-12" />
+                    <TableHead className="w-20" />
                   </TableRow>
                 </TableHeader>
                 <TableBody>
@@ -235,7 +235,7 @@ export default async function CashflowPage(props: { searchParams?: Promise<{ pag
                           {formatRupiah(cf.balance)}
                         </TableCell>
                         <TableCell>
-                          <CashflowActions id={cf.id} />
+                          <CashflowActions cashflow={cf} />
                         </TableCell>
                       </TableRow>
                     );
@@ -265,7 +265,7 @@ export default async function CashflowPage(props: { searchParams?: Promise<{ pag
                         <span>Saldo {formatRupiah(cf.balance)}</span>
                       </div>
                     </div>
-                    <CashflowActions id={cf.id} />
+                    <CashflowActions cashflow={cf} />
                   </li>
                 )
               })}
