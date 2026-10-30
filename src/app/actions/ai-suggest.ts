@@ -8,7 +8,7 @@ import { allocationGroup, GROUP_OPTIONS } from "@/lib/allocation"
 // Tebakan kelompok dari Gemini (free tier Google AI Studio) untuk transaksi non-bisnis yang belum punya kelompok.
 // Yang dikirim hanya tipe, kategori, deskripsi, dan nominal transaksi pribadi — bukan data penghuni/sewa.
 // Free tier: Google boleh memakai isi permintaan untuk melatih modelnya, jadi angka panjang (NIK, no. HP/rekening) disamarkan.
-const MODEL = process.env.GEMINI_MODEL || "gemini-flash-latest"
+const MODELS = [...new Set([process.env.GEMINI_MODEL, "gemini-3.6-flash", "gemini-3.5-flash-lite", "gemini-flash-latest"].filter((m): m is string => !!m))]
 const MAX_ITEMS = 40
 const FALLBACK = new Set(["Lain-lain", "Pemasukan lain"])
 const isPlaceholder = (d: string) => d.length < 3 || /^(-+|x+|tba|\?+|\.+)$/.test(d)
@@ -52,37 +52,47 @@ export async function suggestGroupsAI(): Promise<{ error: string } | { suggestio
     ...list.map((it, i) => `${i} | ${it.type} | ${it.category} | ${mask(it.description)} | ${it.count} | ${Math.round(it.total)}`),
   ].join("\n")
 
-  let text: string
-  try {
-    const res = await fetch(`https://generativelanguage.googleapis.com/v1beta/models/${MODEL}:generateContent`, {
-      method: "POST",
-      headers: { "Content-Type": "application/json", "x-goog-api-key": apiKey },
-      signal: AbortSignal.timeout(45_000),
-      body: JSON.stringify({
-        contents: [{ role: "user", parts: [{ text: prompt }] }],
-        generationConfig: {
-          temperature: 0.2,
-          responseMimeType: "application/json",
-          responseSchema: {
-            type: "ARRAY",
-            items: {
-              type: "OBJECT",
-              properties: { index: { type: "INTEGER" }, group: { type: "STRING" }, keyword: { type: "STRING" }, reason: { type: "STRING" } },
-              required: ["index", "group", "keyword", "reason"],
-            },
-          },
+  // Model gratis kadang penuh (503) atau dihentikan (404) — coba model berikutnya
+  const body = JSON.stringify({
+    contents: [{ role: "user", parts: [{ text: prompt }] }],
+    generationConfig: {
+      temperature: 0.2,
+      responseMimeType: "application/json",
+      responseSchema: {
+        type: "ARRAY",
+        items: {
+          type: "OBJECT",
+          properties: { index: { type: "INTEGER" }, group: { type: "STRING" }, keyword: { type: "STRING" }, reason: { type: "STRING" } },
+          required: ["index", "group", "keyword", "reason"],
         },
-      }),
-    })
-    if (res.status === 429) return { error: "Batas gratis Gemini sedang habis — coba lagi nanti (biasanya beberapa menit, atau besok)." }
-    if (res.status === 404) return { error: `Model "${MODEL}" tidak ditemukan di Gemini — isi GEMINI_MODEL di .env server dengan model yang tersedia (mis. gemini-3.6-flash).` }
-    if (res.status === 403) return { error: "API key Gemini ditolak — cek lagi GEMINI_API_KEY di .env server." }
-    if (!res.ok) return { error: `Gemini menolak permintaan (${res.status}): ${(await res.text()).slice(0, 200)}` }
-    const data = await res.json()
-    text = data?.candidates?.[0]?.content?.parts?.map((p: { text?: string }) => p.text ?? "").join("") ?? ""
-  } catch (error) {
-    return { error: "Gagal menghubungi Gemini: " + (error instanceof Error ? error.message : String(error)) }
+      },
+    },
+  })
+  let text: string | null = null
+  let lastError = ""
+  for (const model of MODELS) {
+    try {
+      const res = await fetch(`https://generativelanguage.googleapis.com/v1beta/models/${model}:generateContent`, {
+        method: "POST",
+        headers: { "Content-Type": "application/json", "x-goog-api-key": apiKey },
+        signal: AbortSignal.timeout(45_000),
+        body,
+      })
+      if (res.status === 403) return { error: "API key Gemini ditolak — cek lagi GEMINI_API_KEY di .env server." }
+      if (!res.ok) {
+        lastError =
+          res.status === 429 ? "batas gratis sedang habis" : res.status === 503 ? "sedang penuh" : `${res.status}: ${(await res.text()).slice(0, 150)}`
+        if ([404, 429, 500, 503].includes(res.status)) continue
+        return { error: `Gemini menolak permintaan (${lastError})` }
+      }
+      const data = await res.json()
+      text = data?.candidates?.[0]?.content?.parts?.map((p: { text?: string }) => p.text ?? "").join("") ?? ""
+      break
+    } catch (error) {
+      lastError = error instanceof Error ? error.message : String(error)
+    }
   }
+  if (text === null) return { error: `Gemini belum bisa dipakai (${lastError}) — coba lagi beberapa menit lagi.` }
 
   let answers: { index: number; group: string; keyword: string; reason: string }[]
   try {
