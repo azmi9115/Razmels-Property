@@ -10,6 +10,7 @@ import { EmptyState } from "@/components/empty-state"
 import { InsightList } from "@/components/insight-list"
 import { ReviewButton } from "@/components/review-button"
 import { DeleteRuleButton, GroupPicker } from "@/components/group-picker"
+import { AiSuggestions } from "@/components/ai-suggestions"
 import { StatusPill, type Tone } from "@/components/status-pill"
 import { buildEntries, classifyCashflow } from "@/lib/business"
 import { allocationGroup, ANOMALY_RULES, ANOMALY_SHORT, GROUP_OPTIONS, INVESTMENT_GROUP, type Anomaly, type Severity } from "@/lib/allocation"
@@ -205,6 +206,9 @@ export default async function TransparansiPage(props: { searchParams?: Promise<{
         icon={GraduationCap}
         bodyClassName={taught.length > 0 ? "p-0 pt-4" : undefined}
       >
+        <div className={cn("mb-4", taught.length > 0 && "px-5")}>
+          <AiSuggestions enabled={!!process.env.GEMINI_API_KEY} options={GROUP_OPTIONS} />
+        </div>
         {taught.length === 0 ? (
           <p className="text-[13px] text-muted-foreground">
             Belum ada. Buka salah satu kelompok di <b>Alur uang</b>, lalu ubah kelompok transaksi yang kurang tepat.

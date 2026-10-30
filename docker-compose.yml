@@ -13,6 +13,9 @@ services:
       # Tanggal disimpan sebagai tengah malam WIB; tanpa TZ ini server (UTC) membaca tanggal 1 sebagai tanggal 31
       - TZ=Asia/Jakarta
       - NEXTAUTH_URL=https://razmels.com
+      # Tebakan AI di Transparansi (opsional). Isi di file .env di samping docker-compose.yml, jangan di sini.
+      - GEMINI_API_KEY=${GEMINI_API_KEY:-}
+      - GEMINI_MODEL=${GEMINI_MODEL:-}
       - NEXTAUTH_SECRET=ba0437937f1824a7900479414cc402dd41f1351142cb262a3b8963eea7022200
 
 volumes:

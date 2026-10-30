@@ -4,6 +4,15 @@ Catatan kronologis semua perubahan, penambahan fitur, dan pemeliharaan pada sist
 
 ---
 
+## 📅 Jumat, 30 Oktober 2026
+**Status:** Sistem belajar tanpa biaya AI
+
+### ✨ Ditambahkan (Added)
+- **Tebakan AI** di Transparansi → "Yang sudah diajarkan": tombol "Minta tebakan AI" mengirim deskripsi & nominal transaksi pribadi yang masih "Lain-lain" ke Gemini (free tier Google AI Studio). Pemilik meninjau tiap tebakan (Terima / Bukan, kata kunci & kelompok bisa diubah). Yang diterima disimpan sebagai ajaran, jadi web mengenalinya tanpa AI berikutnya. Aktif hanya kalau `GEMINI_API_KEY` diisi di `.env` server; data penghuni/sewa tidak dikirim dan angka panjang disamarkan.
+- **Cek bulanan** (`scripts/cek-bulanan.mjs` + skill `.claude/skills/cek-bulanan`): Claude Code membaca salinan database produksi, merangkum bulan itu, menandai yang janggal, dan mengusulkan ajaran yang disimpan setelah pemilik setuju.
+
+---
+
 ## 📅 Rabu, 28 Oktober 2026
 **Status:** Laporan, transparansi keuangan, dan update data dari Excel
 
