@@ -40,6 +40,8 @@ There is no test suite. "Testing" means running `npm run dev` and checking the f
 
 ### UI conventions
 
+- **Design skills follow this system, not their own taste.** Skills such as `frontend-design`, `taste-skill`, `premium-web-design`, `ui-ux-pro-max`, `ui-design-system` and `tailwind-patterns` may guide layout, hierarchy and polish. They must not introduce new colors, fonts, radii, shadows, gradients, glassmorphism or other styles outside the tokens and components below. The dashboard is a functional tool: consistency and readability beat novelty. Visual exploration beyond this system is only for the public landing page, and only when the user asks for it.
+
 - **Design tokens** live in `src/app/globals.css` (brand navy `#121826`, green `#42c18e`, indigo `#5b5fe0`; light + `.dark` via next-themes). Use token classes (`bg-card`, `text-muted-foreground`, `bg-success-soft text-success`, `text-danger`, …) — never raw `slate-*`/hex, or dark mode breaks. The sidebar is always navy.
 - **Fonts** come from `@fontsource-variable/*` (Plus Jakarta Sans, JetBrains Mono), not `next/font/google` — the VPS Docker build has no reliable access to Google Fonts.
 - **Formatting**: always use `src/lib/format.ts` (`formatRupiah`, `formatRupiahCompact`, `formatDate`, `whatsappLink`, `isBlank` for imported placeholder values like NIK `"0"`). Due-date status (`late`/`soon`/`ok`) comes from `getDueInfo` in `src/lib/rent.ts`.
