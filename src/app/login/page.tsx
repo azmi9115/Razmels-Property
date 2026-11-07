@@ -55,7 +55,7 @@ export default function LoginPage() {
       <section className="relative hidden overflow-hidden bg-brand-ink p-12 text-white lg:flex lg:flex-col">
         <div className="grid-pattern pointer-events-none absolute inset-0 [mask-image:radial-gradient(ellipse_at_30%_20%,black,transparent_75%)]" />
         <div className="pointer-events-none absolute -top-32 -left-20 size-[460px] rounded-full bg-emerald-500/25 blur-[110px]" />
-        <div className="pointer-events-none absolute -right-24 bottom-0 size-[420px] rounded-full bg-indigo-500/20 blur-[110px]" />
+        <div className="pointer-events-none absolute -right-24 bottom-0 size-[420px] rounded-full bg-teal-500/15 blur-[110px]" />
 
         <Link href="/" className="relative flex items-center gap-3">
           <BrandMark className="size-11" />

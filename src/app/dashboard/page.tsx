@@ -140,7 +140,7 @@ export default async function DashboardPage() {
   const capaianBulanIni = totalPotensiKotor > 0 ? (incomeThisMonth / totalPotensiKotor) * 100 : 0
 
   return (
-    <div className="space-y-6 animate-in fade-in slide-in-from-bottom-2 duration-500">
+    <div className="space-y-6 animate-in fade-in slide-in-from-bottom-2 duration-150">
       <PageHeader
         eyebrow={new Intl.DateTimeFormat("id-ID", { timeZone: TZ, dateStyle: "full" }).format(now)}
         title={
@@ -168,7 +168,7 @@ export default async function DashboardPage() {
         <section className="relative overflow-hidden rounded-2xl bg-brand-navy p-6 text-white shadow-[0_20px_50px_-20px_rgb(11_17_32/0.6)] ring-1 ring-white/5 sm:p-7 xl:col-span-2">
           <div className="grid-pattern pointer-events-none absolute inset-0 [mask-image:radial-gradient(ellipse_at_top_right,black,transparent_70%)]" />
           <div className="pointer-events-none absolute -top-24 -right-16 size-72 rounded-full bg-emerald-400/25 blur-3xl" />
-          <div className="pointer-events-none absolute -bottom-28 left-1/3 size-72 rounded-full bg-indigo-500/20 blur-3xl" />
+          <div className="pointer-events-none absolute -bottom-28 left-1/3 size-72 rounded-full bg-teal-500/15 blur-3xl" />
 
           <div className="relative">
             <div className="flex items-center justify-between gap-4">
@@ -362,7 +362,7 @@ export default async function DashboardPage() {
       {/* ── Insight ─────────────────────────────────────────── */}
       <section className="surface overflow-hidden">
         <header className="flex items-center gap-3 border-b px-5 py-4">
-          <span className="flex size-9 items-center justify-center rounded-xl bg-gradient-to-br from-emerald-400 to-indigo-500 text-white">
+          <span className="flex size-9 items-center justify-center rounded-xl bg-gradient-to-br from-emerald-400 to-teal-600 text-white">
             <Sparkles className="size-[18px]" />
           </span>
           <div>
@@ -440,7 +440,7 @@ function HeroStat({
         ) : (
           <>
             {up ? <ArrowUpRight className="size-3.5" /> : <ArrowDownRight className="size-3.5" />}
-            {formatRupiahCompact(Math.abs(diff))} vs bulan lalu
+            {up ? "Naik" : "Turun"} {formatRupiahCompact(Math.abs(diff))} dari bulan lalu
           </>
         )}
       </p>

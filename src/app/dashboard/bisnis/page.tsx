@@ -77,7 +77,7 @@ export default async function BisnisPage(props: { searchParams?: Promise<{ year?
   const unmatchedTotal = unmatched.reduce((a, p) => a + p.amount, 0)
 
   return (
-    <div className="space-y-6 animate-in fade-in slide-in-from-bottom-2 duration-300">
+    <div className="space-y-6 animate-in fade-in slide-in-from-bottom-2 duration-150">
       <PageHeader
         eyebrow="Keuangan"
         title="Laporan Bisnis"

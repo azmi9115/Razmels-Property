@@ -4,6 +4,21 @@ Catatan kronologis semua perubahan, penambahan fitur, dan pemeliharaan pada sist
 
 ---
 
+## 📅 Sabtu, 7 November 2026
+**Status:** Finishing tampilan
+
+### 🔄 Diubah (Changed)
+- Landing page menyebut lokasi apartemen (Daan Mogot, Jakarta Barat dan Depok).
+- Semburat ungu hiasan di landing, login, dan dashboard diganti hijau/toska sesuai logo.
+- Perbandingan bulan lalu di dashboard ditulis dengan kata ("Naik"/"Turun …"), tidak hanya panah & warna.
+- Semua angka memakai digit rata (tabular) supaya kolom nominal sejajar.
+- Animasi pindah halaman dipercepat (0,15 detik).
+
+### 🛠️ Diperbaiki (Fixed)
+- Landing page: jumlah unit tersedia di badge (termasuk apartemen) dan di peta unit (kamar & kios) kini konsisten dan diberi keterangan.
+
+---
+
 ## 📅 Jumat, 30 Oktober 2026
 **Status:** Sistem belajar tanpa biaya AI
 

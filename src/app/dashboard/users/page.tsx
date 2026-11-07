@@ -12,7 +12,7 @@ export default async function UsersPage() {
   const users = await getUsers()
 
   return (
-    <div className="space-y-6 animate-in fade-in slide-in-from-bottom-2 duration-300">
+    <div className="space-y-6 animate-in fade-in slide-in-from-bottom-2 duration-150">
       <PageHeader
         eyebrow="Administrasi"
         title="Manajemen Staf"

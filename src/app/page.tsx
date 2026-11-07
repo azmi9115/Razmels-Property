@@ -29,6 +29,7 @@ export default async function LandingPage() {
   const apartments = units.filter((u) => isStandaloneUnit(u.type))
   const blockUnits = units.filter((u) => !isStandaloneUnit(u.type))
   const blockAvailable = blockUnits.filter((u) => !u.occupied).length
+  const apartmentAvailable = apartments.filter((u) => !u.occupied).length
 
   // Kelompokkan per blok (prefix kode: "BA-1" → "BA")
   const blocks = new Map<string, typeof units>()
@@ -55,7 +56,7 @@ export default async function LandingPage() {
       {/* Latar: grid + cahaya brand */}
       <div className="grid-pattern pointer-events-none absolute inset-0 [mask-image:radial-gradient(ellipse_80%_60%_at_50%_0%,black,transparent)]" />
       <div className="pointer-events-none absolute -top-40 left-1/2 h-[520px] w-[900px] -translate-x-1/2 rounded-full bg-emerald-500/20 blur-[120px]" />
-      <div className="pointer-events-none absolute top-[40%] -right-40 h-[420px] w-[520px] rounded-full bg-indigo-500/15 blur-[120px]" />
+      <div className="pointer-events-none absolute top-[40%] -right-40 h-[420px] w-[520px] rounded-full bg-teal-500/10 blur-[120px]" />
 
       <header className="relative z-10 mx-auto flex max-w-6xl items-center justify-between px-5 py-5 sm:px-8">
         <Link href="/" className="flex items-center gap-3">
@@ -85,14 +86,18 @@ export default async function LandingPage() {
                 <span className="absolute inline-flex size-full animate-ping rounded-full bg-emerald-400 opacity-60" />
                 <span className="relative inline-flex size-2 rounded-full bg-emerald-400" />
               </span>
-              {available > 0 ? `${available} unit tersedia saat ini` : "Semua unit sedang terisi"}
+              {available === 0
+                ? "Semua unit sedang terisi"
+                : apartmentAvailable > 0
+                  ? `${available} unit tersedia, termasuk ${apartmentAvailable} apartemen`
+                  : `${available} unit tersedia saat ini`}
             </span>
             <h1 className="mt-6 text-4xl leading-[1.05] font-extrabold tracking-tight sm:text-6xl">
               Hunian & tempat usaha,{" "}
               <span className="bg-gradient-to-r from-emerald-300 via-emerald-400 to-teal-300 bg-clip-text text-transparent">dikelola dengan rapi.</span>
             </h1>
             <p className="mt-6 max-w-xl text-base leading-relaxed text-white/65 sm:text-lg">
-              Razmel&apos;s Property menyewakan kamar, kios, dan apartemen dengan tarif bulanan yang jelas. Setiap pembayaran tercatat dan punya kuitansi digital.
+              Razmel&apos;s Property menyewakan kamar dan kios, serta apartemen di Daan Mogot (Jakarta Barat) dan Depok, dengan tarif bulanan yang jelas. Setiap pembayaran tercatat dan punya kuitansi digital.
             </p>
             <div className="mt-9 flex flex-wrap gap-3">
               {wa ? (
@@ -121,7 +126,7 @@ export default async function LandingPage() {
 
           {/* Peta unit — data langsung dari sistem */}
           <div className="relative">
-            <div className="absolute -inset-4 rounded-[2rem] bg-gradient-to-br from-emerald-400/20 via-transparent to-indigo-500/20 blur-2xl" />
+            <div className="absolute -inset-4 rounded-[2rem] bg-gradient-to-br from-emerald-400/20 via-transparent to-teal-400/15 blur-2xl" />
             <div className="relative rounded-3xl bg-white/[0.04] p-6 ring-1 ring-white/10 backdrop-blur-xl">
               <div className="flex items-center justify-between">
                 <div>
@@ -161,7 +166,7 @@ export default async function LandingPage() {
               <div className="mt-6 grid grid-cols-3 gap-3 border-t border-white/10 pt-5 text-center">
                 <div>
                   <p className="text-2xl font-bold">{blockUnits.length}</p>
-                  <p className="text-[11px] text-white/50">Total unit</p>
+                  <p className="text-[11px] text-white/50">Kamar & kios</p>
                 </div>
                 <div>
                   <p className="text-2xl font-bold text-emerald-300">{blockAvailable}</p>
@@ -220,7 +225,7 @@ export default async function LandingPage() {
             <div className="mt-10 grid gap-5 md:grid-cols-2">
               {apartments.map((a) => (
                 <div key={a.code} className="group relative overflow-hidden rounded-3xl bg-white/[0.04] p-7 ring-1 ring-white/10 transition-colors hover:bg-white/[0.06]">
-                  <div className="pointer-events-none absolute -top-16 -right-16 size-48 rounded-full bg-indigo-400/10 blur-2xl" />
+                  <div className="pointer-events-none absolute -top-16 -right-16 size-48 rounded-full bg-emerald-400/10 blur-2xl" />
                   <div className="relative flex items-start justify-between gap-4">
                     <span className="flex size-12 shrink-0 items-center justify-center rounded-2xl bg-emerald-400/15 text-emerald-300 ring-1 ring-emerald-400/20">
                       <Hotel className="size-6" />

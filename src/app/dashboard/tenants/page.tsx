@@ -115,7 +115,7 @@ export default async function TenantsPage(props: { searchParams?: Promise<{ quer
   }
 
   return (
-    <div className="space-y-6 animate-in fade-in slide-in-from-bottom-2 duration-300">
+    <div className="space-y-6 animate-in fade-in slide-in-from-bottom-2 duration-150">
       <PageHeader
         eyebrow="Operasional"
         title="Penghuni"

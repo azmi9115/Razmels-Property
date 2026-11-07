@@ -130,7 +130,7 @@ export default async function LaporanTahunanPage(props: { searchParams?: Promise
 
       {/* Kertas laporan — selalu terang, juga saat dark mode */}
       <article className="print-report overflow-hidden rounded-2xl bg-white text-slate-900 shadow-xl ring-1 ring-slate-200 print:rounded-none print:shadow-none print:ring-0">
-        <div className="h-2 bg-gradient-to-r from-emerald-400 via-emerald-500 to-indigo-500" />
+        <div className="h-2 bg-gradient-to-r from-emerald-400 via-emerald-500 to-teal-600" />
         <div className="space-y-10 p-6 sm:p-10 print:space-y-7 print:px-0 print:pb-0">
           <header className="flex flex-col gap-4 border-b border-slate-200 pb-6 sm:flex-row sm:items-end sm:justify-between">
             <div className="flex items-center gap-3">

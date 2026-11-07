@@ -120,7 +120,7 @@ export default async function TransparansiPage(props: { searchParams?: Promise<{
   const anomalyCounts = Object.values(ANOMALY_RULES).map((r) => [r, anomalies.filter((a) => a.rule === r).length] as const)
 
   return (
-    <div className="space-y-6 animate-in fade-in slide-in-from-bottom-2 duration-300">
+    <div className="space-y-6 animate-in fade-in slide-in-from-bottom-2 duration-150">
       <PageHeader
         eyebrow="Keuangan"
         title="Transparansi Keuangan"

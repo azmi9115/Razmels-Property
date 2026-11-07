@@ -36,7 +36,7 @@ export default async function InvoicePage({ params }: { params: Promise<{ id: st
 
       {/* Kertas kuitansi — selalu terang, juga saat dark mode */}
       <article className="relative overflow-hidden rounded-2xl bg-white text-slate-900 shadow-xl ring-1 ring-slate-200 print:rounded-none print:shadow-none print:ring-0">
-        <div className="h-2 bg-gradient-to-r from-emerald-400 via-emerald-500 to-indigo-500" />
+        <div className="h-2 bg-gradient-to-r from-emerald-400 via-emerald-500 to-teal-600" />
 
         <div className="p-8 sm:p-12">
           <header className="flex flex-col justify-between gap-6 border-b border-slate-200 pb-8 sm:flex-row sm:items-start">
