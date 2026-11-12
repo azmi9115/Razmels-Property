@@ -2,7 +2,8 @@ import { existsSync } from "fs"
 import path from "path"
 
 // Foto asli untuk halaman depan cukup ditaruh di public/landing dengan nama slot-nya, tanpa ubah kode:
-//   hero.jpg                                → gambar besar di bagian atas
+//   hero.jpg                                → gambar besar di bagian atas (mendatar)
+//   hero-hp.jpg                             → versi tegak untuk layar HP (opsional)
 //   blok-ba.jpg, blok-bb.jpg, blok-da.jpg…  → kartu tiap blok
 //   kamar.jpg, kios.jpg                     → dipakai semua blok bertipe itu kalau foto bloknya belum ada
 //   apartment-sky-terrace-lagoon.jpg…       → kartu apartemen (nama unit, huruf kecil, spasi jadi "-")

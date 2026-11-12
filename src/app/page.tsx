@@ -108,14 +108,15 @@ export default async function LandingPage() {
 
   const wa = whatsappLink(siteConfig.whatsapp, "Halo Razmel's Property, saya ingin menanyakan unit yang masih tersedia.")
   const heroPhoto = landingPhoto("hero")
+  const heroPhotoMobile = landingPhoto("hero-hp")
   const availability = available > 0 ? `${available} unit tersedia hari ini` : "Semua unit sedang terisi"
 
   const steps = [
     { title: "Pilih unit yang tersedia", text: "Lihat pilihan unit di atas. Nomor unit yang masih kosong ditandai hijau." },
     {
-      title: "Hubungi pengelola",
+      title: wa ? "Chat pengelola lewat WhatsApp" : "Hubungi pengelola",
       text: wa
-        ? "Kirim pesan lewat WhatsApp, sebutkan unit yang Anda minati, lalu atur waktu untuk melihatnya."
+        ? `Kirim pesan ke ${siteConfig.whatsapp} dan sebutkan unit yang Anda minati. Sewa diurus langsung lewat WhatsApp.`
         : "Sebutkan unit yang Anda minati, lalu atur waktu untuk melihatnya langsung.",
     },
     { title: "Bayar dan terima kuitansi", text: "Setiap pembayaran sewa dicatat, dan Anda menerima kuitansinya." },
@@ -157,10 +158,9 @@ export default async function LandingPage() {
                 <span className="flex size-[30px] items-center justify-center rounded-full bg-mist">
                   <MessageCircle className="size-4" />
                 </span>
-                <span>
-                  <span className="hidden sm:inline">WhatsApp: </span>
-                  {siteConfig.whatsapp}
-                </span>
+                {/* HP: cukup label, nomornya ada di tombol dan bagian kontak */}
+                <span className="whitespace-nowrap sm:hidden">Chat WhatsApp</span>
+                <span className="hidden whitespace-nowrap sm:inline">WhatsApp: {siteConfig.whatsapp}</span>
               </a>
             ) : (
               <span className="flex items-center gap-2.5">
@@ -188,8 +188,15 @@ export default async function LandingPage() {
         {/* Hero: gambar gelap dengan sudut kiri bawah melengkung, menu di atas gambar, teks rata kanan */}
         <section id="top" className="relative isolate overflow-hidden rounded-bl-[72px] bg-black text-white sm:rounded-bl-[140px] xl:rounded-bl-[230px]">
           {heroPhoto ? (
-            // eslint-disable-next-line @next/next/no-img-element
-            <img src={heroPhoto} alt="" fetchPriority="high" className="absolute inset-0 -z-10 size-full object-cover opacity-40" />
+            <>
+              {/* Foto digelapkan seperti di desain acuan; HP memakai versi tegak kalau ada */}
+              <picture>
+                {heroPhotoMobile && <source media="(max-width: 767px)" srcSet={heroPhotoMobile} />}
+                <img src={heroPhoto} alt="" fetchPriority="high" className="absolute inset-0 -z-10 size-full object-cover opacity-45" />
+              </picture>
+              {/* Lapisan gelap di sisi teks supaya tulisan tetap terbaca di atas foto */}
+              <div className="absolute inset-0 -z-10 bg-gradient-to-b from-black/45 via-black/20 to-transparent xl:bg-gradient-to-l xl:from-black/55 xl:via-black/15" />
+            </>
           ) : (
             <div className="landing-sky absolute inset-0 -z-10">
               <HeroArt />
@@ -198,7 +205,7 @@ export default async function LandingPage() {
 
           <nav aria-label="Navigasi utama" className="absolute inset-x-0 top-0 z-10">
             <div className="mx-auto flex max-w-6xl items-center justify-between gap-4 px-5 py-5 sm:px-8">
-              <ul className="no-scrollbar -mx-1 flex min-w-0 items-center gap-6 overflow-x-auto px-1 py-1 text-base whitespace-nowrap sm:gap-7">
+              <ul className="no-scrollbar -mx-1 flex min-w-0 items-center gap-4 overflow-x-auto px-1 py-1 text-sm whitespace-nowrap sm:gap-7 sm:text-base">
                 <li>
                   <a href="#top" aria-current="page" className={cn("border-b border-white pb-1", focusLight)}>
                     Beranda
@@ -234,7 +241,12 @@ export default async function LandingPage() {
             </div>
           </nav>
 
-          <div className="mx-auto flex max-w-6xl flex-col px-5 pt-28 pb-[240px] sm:px-8 sm:pt-32 sm:pb-[250px] lg:pb-[260px] xl:min-h-[max(700px,42vw)] xl:justify-center xl:pt-28 xl:pb-[9vw]">
+          <div
+            className={cn(
+              "mx-auto flex max-w-6xl flex-col px-5 pt-28 sm:px-8 sm:pt-32 xl:min-h-[max(700px,42vw)] xl:justify-center xl:pt-28",
+              heroPhoto ? "min-h-[640px] justify-center pb-20 sm:min-h-[680px] xl:pb-16" : "pb-[240px] sm:pb-[250px] lg:pb-[260px] xl:pb-[9vw]"
+            )}
+          >
             <div className="max-w-xl lg:max-w-3xl xl:ml-auto xl:max-w-[41rem] xl:text-right">
               <p className="inline-flex items-center gap-2 rounded-full bg-white/10 px-3.5 py-1.5 text-[13px] font-medium ring-1 ring-white/25 ring-inset">
                 <span className={cn("size-2 rounded-full", available > 0 ? "bg-emerald-400" : "bg-white/50")} />
@@ -306,8 +318,8 @@ export default async function LandingPage() {
           {wa && (
             <div className="flex flex-col gap-7 border-b border-white/15 py-14 md:flex-row md:items-center md:justify-between md:py-16">
               <div className="max-w-xl">
-                <h2 className="text-[30px] leading-tight font-medium sm:text-[36px]">Mau lihat unitnya dulu?</h2>
-                <p className="mt-3 text-base leading-7 text-white/85">Kirim pesan ke pengelola. Sebutkan unit yang Anda minati dan kapan ingin melihatnya.</p>
+                <h2 className="text-[30px] leading-tight font-medium sm:text-[36px]">Tertarik menyewa?</h2>
+                <p className="mt-3 text-base leading-7 text-white/85">Mau menyewa atau tanya-tanya dulu? Langsung chat pengelola di {siteConfig.whatsapp}.</p>
               </div>
               <a href={wa} target="_blank" rel="noreferrer" className={cn(pillWhite, "shrink-0 self-start md:self-auto")}>
                 <MessageCircle className="size-[18px]" />

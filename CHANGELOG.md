@@ -16,6 +16,10 @@ Catatan kronologis semua perubahan, penambahan fitur, dan pemeliharaan pada sist
 - **Slot foto asli** di `public/landing/` (hero, per blok, per apartemen): foto yang ditaruh di sana otomatis menggantikan ilustrasi. Daftar nama file ada di `public/landing/BACA-DULU.txt`.
 - Bagian **Cara menyewa** dan tombol WhatsApp (bilah atas, hero, tiap kartu, tiap nomor unit kosong, penutup) yang muncul begitu nomor diisi di `src/lib/site.ts`.
 - Judul dan deskripsi halaman untuk mesin pencari dan pratinjau tautan.
+- **Foto asli Sky Terrace Lagoon** untuk hero (versi mendatar dan versi HP) dan kartu apartemennya; nomor WhatsApp pengelola dan wilayah (Cengkareng & Depok) diisi.
+
+### 🛠️ Diperbaiki (Fixed)
+- Keterangan Grand Taman Melati 2 yang tertulis dobel di data produksi.
 
 ---
 

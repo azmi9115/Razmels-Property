@@ -3,6 +3,6 @@
 //   tiap kartu unit, dan bagian kontak di bawah. Kosong = semua tombol itu disembunyikan.
 // area: wilayah usaha yang tampil di bilah atas (mis. "Depok & Jakarta Barat"). Kosong = tidak ditampilkan.
 export const siteConfig = {
-  whatsapp: "",
-  area: "",
+  whatsapp: "0813 8772 7480",
+  area: "Cengkareng & Depok",
 }
