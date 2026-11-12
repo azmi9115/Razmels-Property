@@ -55,7 +55,7 @@ export function UnitBrowser({ cards, whatsapp }: { cards: LandingCard[]; whatsap
               )}
             >
               {t}
-              <span className={cn("text-[13px]", type === t ? "text-white/70" : "text-ink/60")}>{countOf(t)}</span>
+              <span className={cn("text-[13px]", type === t ? "text-white/75" : "text-ink/75")}>{countOf(t)}</span>
             </button>
           ))}
         </div>
@@ -159,7 +159,7 @@ function UnitCard({ card, whatsapp }: { card: LandingCard; whatsapp: string }) {
               const link = u.occupied ? null : whatsappLink(whatsapp, `Halo Razmel's Property, saya tertarik dengan unit ${u.code}. Apakah masih kosong?`)
               const chip = cn(
                 "flex size-[30px] items-center justify-center rounded-full text-xs font-semibold",
-                u.occupied ? "bg-white text-ink/50" : "bg-emerald-700 text-white"
+                u.occupied ? "bg-white text-ink/60" : "bg-emerald-700 text-white"
               )
               const text = (
                 <>

@@ -4,6 +4,21 @@ Catatan kronologis semua perubahan, penambahan fitur, dan pemeliharaan pada sist
 
 ---
 
+## 📅 Kamis, 12 November 2026
+**Status:** Halaman depan baru untuk pencari hunian
+
+### 🔄 Diubah (Changed)
+- **Halaman depan (razmels.com) didesain ulang** mengikuti desain acuan "Real Estate Property" pilihan pemilik: bilah atas putih, hero bergambar dengan sudut kiri bawah melengkung dan menu di atasnya, tombol pil, serta kartu bergambar dengan kotak isi yang menumpuk. Dashboard dan login tidak berubah.
+- **Pilihan unit** kini satu kartu per blok (kamar, kios) dan per apartemen, lengkap dengan nomor unit yang tersedia (hijau) dan yang sedang disewa. Bisa disaring per jenis dan "hanya yang tersedia".
+
+### ✨ Ditambahkan (Added)
+- **Ilustrasi senja yang mengikuti data**: jendela menyala = unit dihuni, jendela gelap bertanda hijau = unit kosong. Dipakai selama foto asli belum ada.
+- **Slot foto asli** di `public/landing/` (hero, per blok, per apartemen): foto yang ditaruh di sana otomatis menggantikan ilustrasi. Daftar nama file ada di `public/landing/BACA-DULU.txt`.
+- Bagian **Cara menyewa** dan tombol WhatsApp (bilah atas, hero, tiap kartu, tiap nomor unit kosong, penutup) yang muncul begitu nomor diisi di `src/lib/site.ts`.
+- Judul dan deskripsi halaman untuk mesin pencari dan pratinjau tautan.
+
+---
+
 ## 📅 Sabtu, 7 November 2026
 **Status:** Finishing tampilan
 

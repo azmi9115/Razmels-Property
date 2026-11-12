@@ -13,10 +13,16 @@ import { cn } from "@/lib/utils"
 
 export const dynamic = "force-dynamic"
 
+// Template judul di layout tidak berlaku untuk halaman di segmen yang sama, jadi nama usaha ditulis di sini
+const pageTitle = "Razmel's Property · Sewa kamar, kios & apartemen"
+const pageDescription =
+  "Razmel's Property menyewakan kamar, kios, dan apartemen di Daan Mogot (Jakarta Barat) dan Depok. Lihat unit yang masih tersedia beserta harga sewanya."
+
 export const metadata: Metadata = {
-  title: "Sewa kamar, kios & apartemen",
-  description:
-    "Razmel's Property menyewakan kamar, kios, dan apartemen di Daan Mogot (Jakarta Barat) dan Depok. Lihat unit yang masih tersedia beserta harga sewanya.",
+  title: pageTitle,
+  description: pageDescription,
+  // Dipakai pratinjau tautan saat halaman dibagikan (mis. lewat WhatsApp)
+  openGraph: { title: pageTitle, description: pageDescription, type: "website", locale: "id_ID" },
 }
 
 // Tata letak mengikuti desain acuan "Real Estate Property": bilah atas putih, hero bergambar dengan
@@ -161,7 +167,9 @@ export default async function LandingPage() {
                 <span className="flex size-[30px] items-center justify-center rounded-full bg-mist">
                   <span className={cn("size-2 rounded-full", available > 0 ? "bg-emerald-500" : "bg-ink/30")} />
                 </span>
-                {availability}
+                {/* HP: versi ringkas supaya muat satu baris */}
+                <span className="sm:hidden">{available > 0 ? `${available} tersedia` : "Sedang penuh"}</span>
+                <span className="hidden sm:inline">{availability}</span>
               </span>
             )}
             {wa && (
@@ -226,17 +234,17 @@ export default async function LandingPage() {
             </div>
           </nav>
 
-          <div className="mx-auto flex min-h-[660px] max-w-6xl flex-col px-5 pt-28 pb-[260px] sm:min-h-[700px] sm:px-8 sm:pt-32 sm:pb-[300px] lg:pb-[330px] xl:min-h-[max(700px,42vw)] xl:justify-center xl:pt-28 xl:pb-[9vw]">
-            <div className="max-w-xl xl:ml-auto xl:max-w-[41rem] xl:text-right">
+          <div className="mx-auto flex max-w-6xl flex-col px-5 pt-28 pb-[240px] sm:px-8 sm:pt-32 sm:pb-[250px] lg:pb-[260px] xl:min-h-[max(700px,42vw)] xl:justify-center xl:pt-28 xl:pb-[9vw]">
+            <div className="max-w-xl lg:max-w-3xl xl:ml-auto xl:max-w-[41rem] xl:text-right">
               <p className="inline-flex items-center gap-2 rounded-full bg-white/10 px-3.5 py-1.5 text-[13px] font-medium ring-1 ring-white/25 ring-inset">
                 <span className={cn("size-2 rounded-full", available > 0 ? "bg-emerald-400" : "bg-white/50")} />
                 {availability}
               </p>
-              <h1 className="mt-5 text-[40px] leading-[1.12] font-semibold tracking-[-0.01em] sm:text-[52px] xl:text-[50px]">
+              <h1 className="mt-5 text-[40px] leading-[1.12] font-semibold tracking-[-0.01em] text-balance sm:text-[52px] xl:text-[50px]">
                 Hunian & tempat usaha, <br className="hidden xl:block" />
                 dikelola dengan rapi.
               </h1>
-              <p className="mt-5 text-base leading-7 text-white/90 xl:ml-auto xl:max-w-[33rem]">
+              <p className="mt-5 max-w-xl text-base leading-7 text-balance text-white/90 xl:ml-auto xl:max-w-[33rem]">
                 Razmel&apos;s Property menyewakan kamar dan kios, serta apartemen di Daan Mogot (Jakarta Barat) dan Depok, dengan tarif bulanan yang jelas.
               </p>
               <div className="mt-8 flex flex-wrap gap-3 xl:justify-end">
