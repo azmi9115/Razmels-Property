@@ -1,286 +1,338 @@
+import type { Metadata } from "next"
 import Link from "next/link"
-import { ArrowRight, CalendarCheck2, MessageCircle, ReceiptText, Store, BedDouble, Tag, LogIn, Hotel, MapPin } from "lucide-react"
+import { CalendarCheck2, MapPin, MessageCircle, ReceiptText, Tag } from "lucide-react"
 import prisma from "@/lib/prisma"
 import { BrandMark, BrandWordmark } from "@/components/brand"
-import { formatRupiah, whatsappLink } from "@/lib/format"
+import { HeroArt } from "@/components/landing/scene-art"
+import { UnitBrowser, type LandingCard } from "@/components/landing/unit-browser"
+import { isStandaloneUnit } from "@/lib/building-types"
+import { whatsappLink } from "@/lib/format"
+import { landingPhoto, photoSlug } from "@/lib/landing-photos"
 import { siteConfig } from "@/lib/site"
 import { cn } from "@/lib/utils"
-import { isStandaloneUnit } from "@/lib/building-types"
 
 export const dynamic = "force-dynamic"
 
-const typeIcon: Record<string, React.ComponentType<{ className?: string }>> = {
-  Kamar: BedDouble,
-  Kios: Store,
-  Apartemen: Hotel,
+export const metadata: Metadata = {
+  title: "Sewa kamar, kios & apartemen",
+  description:
+    "Razmel's Property menyewakan kamar, kios, dan apartemen di Daan Mogot (Jakarta Barat) dan Depok. Lihat unit yang masih tersedia beserta harga sewanya.",
 }
+
+// Tata letak mengikuti desain acuan "Real Estate Property": bilah atas putih, hero bergambar dengan
+// sudut kiri bawah melengkung, tombol pil, dan kartu bergambar dengan kotak isi yang menumpuk.
+
+const TYPE_TITLE: Record<string, string> = { Kamar: "Kamar kos", Kios: "Kios", Kontrakan: "Kontrakan" }
+const TYPE_NOUN: Record<string, string> = { Kamar: "kamar", Kios: "kios", Kontrakan: "kontrakan" }
+const PERIOD: Record<string, { per: string; label: string }> = {
+  Bulanan: { per: "bulan", label: "bulanan" },
+  Triwulan: { per: "3 bulan", label: "per tiga bulan" },
+  Tahunan: { per: "tahun", label: "tahunan" },
+}
+
+const focusLight = "focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-white"
+// Tombol pil seperti di desain acuan: putih, berubah hitam saat disentuh
+const pillWhite = cn(
+  "inline-flex h-12 items-center justify-center gap-2 rounded-full bg-white px-6 text-[15px] font-medium text-ink transition-colors hover:bg-black hover:text-white active:translate-y-px",
+  focusLight
+)
+const pillOutline = cn(
+  "inline-flex h-12 items-center justify-center gap-2 rounded-full px-6 text-[15px] font-medium text-white ring-1 ring-white/60 transition-colors ring-inset hover:bg-white hover:text-ink active:translate-y-px",
+  focusLight
+)
 
 export default async function LandingPage() {
   // Hanya data publik: kode unit, tipe, tarif, dan terisi/tidaknya. Tidak ada data penghuni.
   const buildings = await prisma.building.findMany({
     select: { code: true, type: true, rent_price: true, rent_period: true, description: true, tenants: { where: { status: "Active" }, select: { id: true } } },
-    orderBy: { code: "asc" },
   })
 
-  const units = buildings.map((b) => ({ code: b.code, type: b.type, price: b.rent_price, period: b.rent_period, description: b.description, occupied: b.tenants.length > 0 }))
+  const units = buildings
+    .map((b) => ({ code: b.code, type: b.type, price: b.rent_price, period: b.rent_period, description: b.description, occupied: b.tenants.length > 0 }))
+    .sort((a, b) => a.code.localeCompare(b.code, "id", { numeric: true }))
   const available = units.filter((u) => !u.occupied).length
 
-  // Apartemen tampil di bagian sendiri; peta unit hanya untuk unit berblok (kamar & kios)
-  const apartments = units.filter((u) => isStandaloneUnit(u.type))
-  const blockUnits = units.filter((u) => !isStandaloneUnit(u.type))
-  const blockAvailable = blockUnits.filter((u) => !u.occupied).length
-  const apartmentAvailable = apartments.filter((u) => !u.occupied).length
-
-  // Kelompokkan per blok (prefix kode: "BA-1" → "BA")
+  // Kamar & kios dikelompokkan per blok (awalan kode: "BA-1" → "BA"); apartemen satu kartu per unit
   const blocks = new Map<string, typeof units>()
-  blockUnits.forEach((u) => {
-    const key = u.code.split("-")[0] || u.code
-    blocks.set(key, [...(blocks.get(key) ?? []), u])
-  })
-
-  const types = Array.from(new Set(blockUnits.map((u) => u.type))).map((type) => {
-    const list = blockUnits.filter((u) => u.type === type)
-    return {
-      type,
-      total: list.length,
-      available: list.filter((u) => !u.occupied).length,
-      minPrice: Math.min(...list.map((u) => u.price)),
-      period: list[0]?.period ?? "Bulanan",
+  const singles: typeof units = []
+  for (const u of units) {
+    if (isStandaloneUnit(u.type)) singles.push(u)
+    else {
+      const key = u.code.split("-")[0] || u.code
+      blocks.set(key, [...(blocks.get(key) ?? []), u])
     }
-  })
+  }
 
-  const wa = whatsappLink(siteConfig.whatsapp, "Halo Razmel's Property, saya ingin menanyakan ketersediaan unit.")
+  const cards: LandingCard[] = [
+    ...Array.from(blocks, ([key, list]): LandingCard => {
+      const type = list[0].type
+      const prices = list.map((u) => u.price)
+      const free = list.filter((u) => !u.occupied)
+      const period = PERIOD[list[0].period] ?? PERIOD.Bulanan
+      return {
+        key,
+        type,
+        title: `${TYPE_TITLE[type] ?? type} Blok ${key}`,
+        description: `${list.length} ${TYPE_NOUN[type] ?? "unit"}, sewa ${period.label}. ${free.length > 0 ? `Tersedia: ${free.map((u) => u.code).join(", ")}.` : "Semua sedang terisi."}`,
+        units: list.map((u) => ({ code: u.code, label: u.code.split("-")[1] ?? u.code, occupied: u.occupied })),
+        single: false,
+        price: Math.min(...prices),
+        priceVaries: new Set(prices).size > 1,
+        per: period.per,
+        photo: landingPhoto(`blok-${photoSlug(key)}`, photoSlug(type)),
+        art: type === "Kios" ? "kios" : "kos",
+      }
+    }),
+    ...singles.map(
+      (u): LandingCard => ({
+        key: u.code,
+        type: u.type,
+        title: u.code,
+        description: u.description || null,
+        units: [{ code: u.code, label: u.code, occupied: u.occupied }],
+        single: true,
+        price: u.price,
+        priceVaries: false,
+        per: (PERIOD[u.period] ?? PERIOD.Bulanan).per,
+        photo: landingPhoto(photoSlug(u.code), photoSlug(u.type)),
+        art: /lagoon|laguna|sky|pantai/i.test(u.code) ? "tower-lagoon" : "tower-garden",
+      })
+    ),
+  ]
+
+  const wa = whatsappLink(siteConfig.whatsapp, "Halo Razmel's Property, saya ingin menanyakan unit yang masih tersedia.")
+  const heroPhoto = landingPhoto("hero")
+  const availability = available > 0 ? `${available} unit tersedia hari ini` : "Semua unit sedang terisi"
+
+  const steps = [
+    { title: "Pilih unit yang tersedia", text: "Lihat pilihan unit di atas. Nomor unit yang masih kosong ditandai hijau." },
+    {
+      title: "Hubungi pengelola",
+      text: wa
+        ? "Kirim pesan lewat WhatsApp, sebutkan unit yang Anda minati, lalu atur waktu untuk melihatnya."
+        : "Sebutkan unit yang Anda minati, lalu atur waktu untuk melihatnya langsung.",
+    },
+    { title: "Bayar dan terima kuitansi", text: "Setiap pembayaran sewa dicatat, dan Anda menerima kuitansinya." },
+  ]
+
+  const benefits = [
+    { icon: Tag, title: "Tarif tetap per unit", text: "Harga sewa tiap unit tercatat jelas. Yang tertulis di halaman ini adalah tarif di catatan pengelola." },
+    { icon: ReceiptText, title: "Kuitansi setiap bayar", text: "Setiap pembayaran sewa dicatat sistem dan bisa dicetak sebagai kuitansi." },
+    { icon: CalendarCheck2, title: "Jatuh tempo jelas", text: "Masa sewa dihitung dari tanggal masuk Anda, termasuk untuk bulan yang lebih pendek." },
+  ]
 
   return (
-    <div className="dark relative min-h-screen overflow-hidden bg-brand-ink text-white">
-      {/* Latar: grid + cahaya brand */}
-      <div className="grid-pattern pointer-events-none absolute inset-0 [mask-image:radial-gradient(ellipse_80%_60%_at_50%_0%,black,transparent)]" />
-      <div className="pointer-events-none absolute -top-40 left-1/2 h-[520px] w-[900px] -translate-x-1/2 rounded-full bg-emerald-500/20 blur-[120px]" />
-      <div className="pointer-events-none absolute top-[40%] -right-40 h-[420px] w-[520px] rounded-full bg-teal-500/10 blur-[120px]" />
+    <div className="landing min-h-screen">
+      <a href="#unit" className="sr-only focus:not-sr-only focus:fixed focus:top-3 focus:left-3 focus:z-50 focus:rounded-full focus:bg-ink focus:px-5 focus:py-2.5 focus:text-sm focus:font-medium focus:text-white">
+        Lewati ke pilihan unit
+      </a>
 
-      <header className="relative z-10 mx-auto flex max-w-6xl items-center justify-between px-5 py-5 sm:px-8">
-        <Link href="/" className="flex items-center gap-3">
-          <BrandMark className="size-10" />
-          <BrandWordmark subtitle="Kamar, Kios & Apartemen" />
-        </Link>
-        <nav className="hidden items-center gap-8 text-sm text-white/60 md:flex">
-          <a href="#unit" className="transition-colors hover:text-white">Kamar & kios</a>
-          {apartments.length > 0 && <a href="#apartemen" className="transition-colors hover:text-white">Apartemen</a>}
-          <a href="#keunggulan" className="transition-colors hover:text-white">Keunggulan</a>
-        </nav>
-        <Link
-          href="/login"
-          className="inline-flex h-10 items-center gap-2 rounded-full bg-white/10 px-4 text-sm font-semibold ring-1 ring-white/15 backdrop-blur transition-colors hover:bg-white/15"
-        >
-          <LogIn className="size-4" />
-          Masuk staf
-        </Link>
+      {/* Bilah atas putih: merek di kiri, info singkat di kanan */}
+      <header className="bg-white">
+        <div className="mx-auto flex max-w-6xl items-center justify-between gap-4 px-5 py-2.5 sm:px-8">
+          <Link href="/" className="flex items-center gap-3 rounded-lg focus-visible:outline-2 focus-visible:outline-offset-4 focus-visible:outline-ink">
+            <BrandMark className="size-10" />
+            <BrandWordmark subtitle="Kamar, Kios & Apartemen" />
+          </Link>
+          <div className="flex items-center gap-5 text-[15px]">
+            {siteConfig.area && (
+              <>
+                <span className="hidden items-center gap-2.5 md:flex">
+                  <span className="flex size-[30px] items-center justify-center rounded-full bg-mist">
+                    <MapPin className="size-4" />
+                  </span>
+                  {siteConfig.area}
+                </span>
+                <span aria-hidden="true" className="hidden h-7 w-px bg-ink/25 md:block" />
+              </>
+            )}
+            {wa ? (
+              <a href={wa} target="_blank" rel="noreferrer" className="flex items-center gap-2.5 rounded-full hover:underline focus-visible:outline-2 focus-visible:outline-offset-4 focus-visible:outline-ink">
+                <span className="flex size-[30px] items-center justify-center rounded-full bg-mist">
+                  <MessageCircle className="size-4" />
+                </span>
+                <span>
+                  <span className="hidden sm:inline">WhatsApp: </span>
+                  {siteConfig.whatsapp}
+                </span>
+              </a>
+            ) : (
+              <span className="flex items-center gap-2.5">
+                <span className="flex size-[30px] items-center justify-center rounded-full bg-mist">
+                  <span className={cn("size-2 rounded-full", available > 0 ? "bg-emerald-500" : "bg-ink/30")} />
+                </span>
+                {availability}
+              </span>
+            )}
+            {wa && (
+              <>
+                <span aria-hidden="true" className="hidden h-7 w-px bg-ink/25 sm:block" />
+                <Link href="/login" className="hidden rounded-md font-medium underline-offset-4 hover:underline focus-visible:outline-2 focus-visible:outline-offset-4 focus-visible:outline-ink sm:block">
+                  Masuk staf
+                </Link>
+              </>
+            )}
+          </div>
+        </div>
       </header>
 
-      <main className="relative z-10">
-        {/* Hero */}
-        <section className="mx-auto grid max-w-6xl items-center gap-12 px-5 pt-10 pb-20 sm:px-8 lg:grid-cols-[1.1fr_1fr] lg:pt-16 lg:pb-28">
-          <div>
-            <span className="inline-flex items-center gap-2 rounded-full bg-emerald-400/10 px-3 py-1.5 text-xs font-semibold text-emerald-300 ring-1 ring-emerald-400/20">
-              <span className="relative flex size-2">
-                <span className="absolute inline-flex size-full animate-ping rounded-full bg-emerald-400 opacity-60" />
-                <span className="relative inline-flex size-2 rounded-full bg-emerald-400" />
-              </span>
-              {available === 0
-                ? "Semua unit sedang terisi"
-                : apartmentAvailable > 0
-                  ? `${available} unit tersedia, termasuk ${apartmentAvailable} apartemen`
-                  : `${available} unit tersedia saat ini`}
-            </span>
-            <h1 className="mt-6 text-4xl leading-[1.05] font-extrabold tracking-tight sm:text-6xl">
-              Hunian & tempat usaha,{" "}
-              <span className="bg-gradient-to-r from-emerald-300 via-emerald-400 to-teal-300 bg-clip-text text-transparent">dikelola dengan rapi.</span>
-            </h1>
-            <p className="mt-6 max-w-xl text-base leading-relaxed text-white/65 sm:text-lg">
-              Razmel&apos;s Property menyewakan kamar dan kios, serta apartemen di Daan Mogot (Jakarta Barat) dan Depok, dengan tarif bulanan yang jelas. Setiap pembayaran tercatat dan punya kuitansi digital.
-            </p>
-            <div className="mt-9 flex flex-wrap gap-3">
-              {wa ? (
-                <a
-                  href={wa}
-                  target="_blank"
-                  rel="noreferrer"
-                  className="inline-flex h-12 items-center gap-2 rounded-full bg-emerald-400 px-6 text-sm font-bold text-emerald-950 shadow-[0_10px_40px_-10px_rgb(52_211_153/0.7)] transition-transform hover:-translate-y-0.5"
-                >
-                  <MessageCircle className="size-4" />
-                  Tanya ketersediaan
-                </a>
-              ) : null}
-              <a
-                href="#unit"
-                className={cn(
-                  "inline-flex h-12 items-center gap-2 rounded-full px-6 text-sm font-semibold transition-colors",
-                  wa ? "ring-1 ring-white/20 hover:bg-white/5" : "bg-emerald-400 font-bold text-emerald-950 hover:bg-emerald-300"
+      <main>
+        {/* Hero: gambar gelap dengan sudut kiri bawah melengkung, menu di atas gambar, teks rata kanan */}
+        <section id="top" className="relative isolate overflow-hidden rounded-bl-[72px] bg-black text-white sm:rounded-bl-[140px] xl:rounded-bl-[230px]">
+          {heroPhoto ? (
+            // eslint-disable-next-line @next/next/no-img-element
+            <img src={heroPhoto} alt="" fetchPriority="high" className="absolute inset-0 -z-10 size-full object-cover opacity-40" />
+          ) : (
+            <div className="landing-sky absolute inset-0 -z-10">
+              <HeroArt />
+            </div>
+          )}
+
+          <nav aria-label="Navigasi utama" className="absolute inset-x-0 top-0 z-10">
+            <div className="mx-auto flex max-w-6xl items-center justify-between gap-4 px-5 py-5 sm:px-8">
+              <ul className="no-scrollbar -mx-1 flex min-w-0 items-center gap-6 overflow-x-auto px-1 py-1 text-base whitespace-nowrap sm:gap-7">
+                <li>
+                  <a href="#top" aria-current="page" className={cn("border-b border-white pb-1", focusLight)}>
+                    Beranda
+                  </a>
+                </li>
+                <li>
+                  <a href="#unit" className={cn("border-b border-transparent pb-1 transition-colors hover:border-white/70", focusLight)}>
+                    Pilihan unit
+                  </a>
+                </li>
+                <li>
+                  <a href="#cara" className={cn("border-b border-transparent pb-1 transition-colors hover:border-white/70", focusLight)}>
+                    Cara menyewa
+                  </a>
+                </li>
+                {wa && (
+                  <li>
+                    <a href="#kontak" className={cn("border-b border-transparent pb-1 transition-colors hover:border-white/70", focusLight)}>
+                      Kontak
+                    </a>
+                  </li>
                 )}
-              >
-                Lihat unit
-                <ArrowRight className="size-4" />
-              </a>
+              </ul>
+              {wa ? (
+                <a href={wa} target="_blank" rel="noreferrer" className={cn(pillWhite, "hidden shrink-0 sm:inline-flex")}>
+                  Tanya pengelola
+                </a>
+              ) : (
+                <Link href="/login" className={cn(pillWhite, "hidden shrink-0 sm:inline-flex")}>
+                  Masuk staf
+                </Link>
+              )}
             </div>
-          </div>
+          </nav>
 
-          {/* Peta unit — data langsung dari sistem */}
-          <div className="relative">
-            <div className="absolute -inset-4 rounded-[2rem] bg-gradient-to-br from-emerald-400/20 via-transparent to-teal-400/15 blur-2xl" />
-            <div className="relative rounded-3xl bg-white/[0.04] p-6 ring-1 ring-white/10 backdrop-blur-xl">
-              <div className="flex items-center justify-between">
-                <div>
-                  <p className="text-sm font-semibold">Peta unit</p>
-                  <p className="text-xs text-white/50">Diperbarui otomatis dari sistem</p>
-                </div>
-                <div className="flex items-center gap-3 text-[11px] text-white/60">
-                  <span className="flex items-center gap-1.5"><span className="size-2.5 rounded-[4px] bg-emerald-400" />Tersedia</span>
-                  <span className="flex items-center gap-1.5"><span className="size-2.5 rounded-[4px] bg-white/15" />Terisi</span>
-                </div>
-              </div>
-
-              <div className="mt-6 space-y-4">
-                {Array.from(blocks).map(([block, list]) => (
-                  <div key={block} className="flex items-center gap-4">
-                    <span className="w-9 shrink-0 font-mono text-xs font-semibold text-white/50">{block}</span>
-                    <div className="flex flex-wrap gap-2">
-                      {list.map((u) => (
-                        <span
-                          key={u.code}
-                          title={`${u.code} · ${u.type} · ${u.occupied ? "Terisi" : "Tersedia"}`}
-                          className={cn(
-                            "flex h-10 w-12 items-center justify-center rounded-lg font-mono text-[11px] font-semibold transition-transform hover:-translate-y-0.5",
-                            u.occupied
-                              ? "bg-white/[0.07] text-white/40 ring-1 ring-white/10"
-                              : "bg-emerald-400 text-emerald-950 shadow-[0_0_24px_-4px_rgb(52_211_153/0.8)]"
-                          )}
-                        >
-                          {u.code.split("-")[1] ?? u.code}
-                        </span>
-                      ))}
-                    </div>
-                  </div>
-                ))}
-              </div>
-
-              <div className="mt-6 grid grid-cols-3 gap-3 border-t border-white/10 pt-5 text-center">
-                <div>
-                  <p className="text-2xl font-bold">{blockUnits.length}</p>
-                  <p className="text-[11px] text-white/50">Kamar & kios</p>
-                </div>
-                <div>
-                  <p className="text-2xl font-bold text-emerald-300">{blockAvailable}</p>
-                  <p className="text-[11px] text-white/50">Tersedia</p>
-                </div>
-                <div>
-                  <p className="text-2xl font-bold">{blocks.size}</p>
-                  <p className="text-[11px] text-white/50">Blok</p>
-                </div>
+          <div className="mx-auto flex min-h-[660px] max-w-6xl flex-col px-5 pt-28 pb-[260px] sm:min-h-[700px] sm:px-8 sm:pt-32 sm:pb-[300px] lg:pb-[330px] xl:min-h-[max(700px,42vw)] xl:justify-center xl:pt-28 xl:pb-[9vw]">
+            <div className="max-w-xl xl:ml-auto xl:max-w-[41rem] xl:text-right">
+              <p className="inline-flex items-center gap-2 rounded-full bg-white/10 px-3.5 py-1.5 text-[13px] font-medium ring-1 ring-white/25 ring-inset">
+                <span className={cn("size-2 rounded-full", available > 0 ? "bg-emerald-400" : "bg-white/50")} />
+                {availability}
+              </p>
+              <h1 className="mt-5 text-[40px] leading-[1.12] font-semibold tracking-[-0.01em] sm:text-[52px] xl:text-[50px]">
+                Hunian & tempat usaha, <br className="hidden xl:block" />
+                dikelola dengan rapi.
+              </h1>
+              <p className="mt-5 text-base leading-7 text-white/90 xl:ml-auto xl:max-w-[33rem]">
+                Razmel&apos;s Property menyewakan kamar dan kios, serta apartemen di Daan Mogot (Jakarta Barat) dan Depok, dengan tarif bulanan yang jelas.
+              </p>
+              <div className="mt-8 flex flex-wrap gap-3 xl:justify-end">
+                <a href="#unit" className={pillWhite}>
+                  Lihat unit tersedia
+                </a>
+                {wa && (
+                  <a href={wa} target="_blank" rel="noreferrer" className={pillOutline}>
+                    <MessageCircle className="size-[18px]" />
+                    Tanya via WhatsApp
+                  </a>
+                )}
               </div>
             </div>
           </div>
         </section>
 
-        {/* Tipe unit */}
-        <section id="unit" className="mx-auto max-w-6xl scroll-mt-10 px-5 pb-24 sm:px-8">
-          <p className="text-xs font-semibold tracking-[0.16em] text-emerald-300 uppercase">Pilihan unit</p>
-          <h2 className="mt-3 text-3xl font-bold tracking-tight sm:text-4xl">Pilih sesuai kebutuhan</h2>
-          <div className="mt-10 grid gap-5 md:grid-cols-2">
-            {types.map((t) => {
-              const Icon = typeIcon[t.type] ?? Tag
-              return (
-                <div key={t.type} className="group relative overflow-hidden rounded-3xl bg-white/[0.04] p-7 ring-1 ring-white/10 transition-colors hover:bg-white/[0.06]">
-                  <div className="pointer-events-none absolute -top-16 -right-16 size-48 rounded-full bg-emerald-400/10 blur-2xl transition-opacity group-hover:opacity-100" />
-                  <div className="relative flex items-start justify-between">
-                    <span className="flex size-12 items-center justify-center rounded-2xl bg-emerald-400/15 text-emerald-300 ring-1 ring-emerald-400/20">
-                      <Icon className="size-6" />
-                    </span>
-                    <span
-                      className={cn(
-                        "rounded-full px-3 py-1 text-xs font-semibold",
-                        t.available > 0 ? "bg-emerald-400/15 text-emerald-300" : "bg-white/10 text-white/60"
-                      )}
-                    >
-                      {t.available > 0 ? `${t.available} tersedia` : "Penuh"}
-                    </span>
-                  </div>
-                  <h3 className="relative mt-6 text-2xl font-bold">{t.type}</h3>
-                  <p className="relative mt-1 text-sm text-white/55">{t.total} unit · sewa {t.period.toLowerCase()}</p>
-                  <p className="relative mt-6 text-sm text-white/55">
-                    Mulai{" "}
-                    <span className="text-3xl font-extrabold tracking-tight text-white">{formatRupiah(t.minPrice)}</span>
-                    <span className="text-white/55"> /bulan</span>
-                  </p>
-                </div>
-              )
-            })}
-          </div>
+        {/* Pilihan unit: kartu per blok dan per apartemen, bisa disaring */}
+        <section id="unit" className="mx-auto max-w-6xl scroll-mt-6 px-5 py-16 sm:px-8 sm:py-20">
+          <h2 className="text-[32px] leading-tight font-medium sm:text-[40px]">Pilihan unit</h2>
+          <p className="mt-3 mb-7 max-w-2xl text-base leading-7 text-ink/80">
+            Pilih jenisnya, lalu lihat nomor unit yang masih tersedia. Statusnya diambil langsung dari catatan pengelola.
+          </p>
+          <UnitBrowser cards={cards} whatsapp={siteConfig.whatsapp} />
         </section>
 
-        {/* Apartemen */}
-        {apartments.length > 0 && (
-          <section id="apartemen" className="mx-auto max-w-6xl scroll-mt-10 px-5 pb-24 sm:px-8">
-            <p className="text-xs font-semibold tracking-[0.16em] text-emerald-300 uppercase">Apartemen</p>
-            <h2 className="mt-3 text-3xl font-bold tracking-tight sm:text-4xl">Unit apartemen</h2>
-            <div className="mt-10 grid gap-5 md:grid-cols-2">
-              {apartments.map((a) => (
-                <div key={a.code} className="group relative overflow-hidden rounded-3xl bg-white/[0.04] p-7 ring-1 ring-white/10 transition-colors hover:bg-white/[0.06]">
-                  <div className="pointer-events-none absolute -top-16 -right-16 size-48 rounded-full bg-emerald-400/10 blur-2xl" />
-                  <div className="relative flex items-start justify-between gap-4">
-                    <span className="flex size-12 shrink-0 items-center justify-center rounded-2xl bg-emerald-400/15 text-emerald-300 ring-1 ring-emerald-400/20">
-                      <Hotel className="size-6" />
-                    </span>
-                    <span
-                      className={cn(
-                        "rounded-full px-3 py-1 text-xs font-semibold",
-                        a.occupied ? "bg-white/10 text-white/60" : "bg-emerald-400/15 text-emerald-300"
-                      )}
-                    >
-                      {a.occupied ? "Sedang disewa" : "Tersedia"}
-                    </span>
-                  </div>
-                  <h3 className="relative mt-6 text-2xl font-bold">{a.code}</h3>
-                  {a.description && (
-                    <p className="relative mt-2 flex items-start gap-2 text-sm leading-relaxed text-white/60">
-                      <MapPin className="mt-0.5 size-4 shrink-0 text-white/40" />
-                      {a.description}
-                    </p>
-                  )}
-                  <p className="relative mt-6 text-sm text-white/55">
-                    <span className="text-3xl font-extrabold tracking-tight text-white">{formatRupiah(a.price)}</span>
-                    <span className="text-white/55"> /{a.period === "Tahunan" ? "tahun" : "bulan"}</span>
-                  </p>
-                </div>
-              ))}
-            </div>
-          </section>
-        )}
-
-        {/* Keunggulan */}
-        <section id="keunggulan" className="mx-auto max-w-6xl scroll-mt-10 px-5 pb-24 sm:px-8">
-          <div className="grid gap-5 md:grid-cols-3">
-            {[
-              { icon: ReceiptText, title: "Kuitansi digital", text: "Setiap pembayaran sewa dicatat sistem dan bisa dicetak sebagai kuitansi resmi." },
-              { icon: CalendarCheck2, title: "Jatuh tempo jelas", text: "Masa sewa dihitung otomatis dari tanggal masuk, termasuk bulan yang lebih pendek." },
-              { icon: Tag, title: "Tarif per unit tetap", text: "Harga sewa tiap unit tercatat jelas sehingga tidak ada biaya yang membingungkan." },
-            ].map((f) => (
-              <div key={f.title} className="rounded-3xl bg-white/[0.03] p-7 ring-1 ring-white/10">
-                <f.icon className="size-6 text-emerald-300" />
-                <h3 className="mt-5 text-lg font-semibold">{f.title}</h3>
-                <p className="mt-2 text-sm leading-relaxed text-white/55">{f.text}</p>
-              </div>
+        {/* Cara menyewa: memang berurutan, jadi diberi nomor */}
+        <section id="cara" className="mx-auto max-w-6xl scroll-mt-6 px-5 pb-20 sm:px-8 sm:pb-24">
+          <h2 className="text-[32px] leading-tight font-medium sm:text-[40px]">Cara menyewa</h2>
+          <ol className="mt-8 grid gap-5 md:grid-cols-3">
+            {steps.map((step, i) => (
+              <li key={step.title} className="rounded-[30px] bg-mist p-6 sm:p-7">
+                <span className="flex size-11 items-center justify-center rounded-full bg-white text-lg font-semibold">{i + 1}</span>
+                <h3 className="mt-5 text-xl font-medium">{step.title}</h3>
+                <p className="mt-2 text-[15px] leading-6 text-ink/80">{step.text}</p>
+              </li>
             ))}
-          </div>
+          </ol>
+
+          <ul className="mt-12 grid gap-8 border-t border-ink/15 pt-10 md:grid-cols-3">
+            {benefits.map((b) => (
+              <li key={b.title} className="flex gap-4">
+                <span className="flex size-11 shrink-0 items-center justify-center rounded-full bg-mist">
+                  <b.icon className="size-5" />
+                </span>
+                <div>
+                  <h3 className="text-[17px] font-medium">{b.title}</h3>
+                  <p className="mt-1 text-[15px] leading-6 text-ink/80">{b.text}</p>
+                </div>
+              </li>
+            ))}
+          </ul>
         </section>
       </main>
 
-      <footer className="relative z-10 border-t border-white/10">
-        <div className="mx-auto flex max-w-6xl flex-col items-center justify-between gap-4 px-5 py-8 text-sm text-white/45 sm:flex-row sm:px-8">
-          <div className="flex items-center gap-3">
-            <BrandMark className="size-8" />
-            <span>© {new Date().getFullYear()} Razmel&apos;s Property</span>
+      {/* Penutup: lengkung di kanan atas, cerminan lengkung hero */}
+      <footer id="kontak" className="scroll-mt-6 rounded-tr-[72px] bg-ink text-white sm:rounded-tr-[140px] xl:rounded-tr-[230px]">
+        <div className="mx-auto max-w-6xl px-5 sm:px-8">
+          {wa && (
+            <div className="flex flex-col gap-7 border-b border-white/15 py-14 md:flex-row md:items-center md:justify-between md:py-16">
+              <div className="max-w-xl">
+                <h2 className="text-[30px] leading-tight font-medium sm:text-[36px]">Mau lihat unitnya dulu?</h2>
+                <p className="mt-3 text-base leading-7 text-white/85">Kirim pesan ke pengelola. Sebutkan unit yang Anda minati dan kapan ingin melihatnya.</p>
+              </div>
+              <a href={wa} target="_blank" rel="noreferrer" className={cn(pillWhite, "shrink-0 self-start md:self-auto")}>
+                <MessageCircle className="size-[18px]" />
+                Chat via WhatsApp
+              </a>
+            </div>
+          )}
+
+          <div className={cn("flex flex-col gap-8 pb-10 md:flex-row md:items-start md:justify-between", wa ? "pt-10" : "pt-16")}>
+            <div className="flex items-center gap-3">
+              <BrandMark className="size-10" />
+              <BrandWordmark subtitle="Kamar, Kios & Apartemen" />
+            </div>
+            <ul className="flex flex-wrap gap-x-8 gap-y-3 text-[15px]">
+              <li>
+                <a href="#unit" className={cn("underline-offset-4 hover:underline", focusLight)}>
+                  Pilihan unit
+                </a>
+              </li>
+              <li>
+                <a href="#cara" className={cn("underline-offset-4 hover:underline", focusLight)}>
+                  Cara menyewa
+                </a>
+              </li>
+              <li>
+                <Link href="/login" className={cn("underline-offset-4 hover:underline", focusLight)}>
+                  Masuk staf pengelola
+                </Link>
+              </li>
+            </ul>
           </div>
-          <Link href="/login" className="transition-colors hover:text-white">Portal staf →</Link>
+
+          <p className="border-t border-white/15 py-5 text-sm text-white/75">© {new Date().getFullYear()} Razmel&apos;s Property</p>
         </div>
       </footer>
     </div>

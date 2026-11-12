@@ -65,6 +65,10 @@
   --color-brand-green: #42c18e;
   --color-brand-indigo: #5b5fe0;
 
+  /* Halaman depan publik: slate & abu terang dari desain acuan. Nilainya tetap, tidak ikut mode gelap */
+  --color-ink: #353d46;
+  --color-mist: #f0f3f6;
+
   --radius-sm: calc(var(--radius) * 0.6);
   --radius-md: calc(var(--radius) * 0.8);
   --radius-lg: var(--radius);
@@ -217,6 +221,20 @@
     background-size: 44px 44px;
   }
 
+  /* Halaman depan selalu terang, apa pun tema yang dipilih di dashboard */
+  .landing {
+    color-scheme: light;
+    background: #ffffff;
+    color: var(--color-ink);
+  }
+
+  /* Langit senja di belakang ilustrasi hero halaman depan */
+  .landing-sky {
+    background:
+      radial-gradient(58rem 24rem at 14% 100%, rgb(226 152 112 / 0.32), transparent 70%),
+      linear-gradient(180deg, #1a212c 0%, #2b3646 46%, #4b5065 80%, #675f74 100%);
+  }
+
   .thin-scrollbar {
     scrollbar-width: thin;
     scrollbar-color: var(--input) transparent;
@@ -237,6 +255,23 @@
   20% { transform: rotate(-8deg); }
   40% { transform: rotate(-4deg); }
   50% { transform: rotate(10deg); }
+}
+
+/* Hero halaman depan: jendela menyala bergantian saat halaman dibuka */
+@keyframes landing-lamp {
+  from { opacity: 0; }
+  to { opacity: 1; }
+}
+
+@media (prefers-reduced-motion: no-preference) {
+  .landing-lamp {
+    animation: landing-lamp 0.7s ease-out both;
+  }
+
+  /* Tautan menu halaman depan menggulung halus ke bagiannya */
+  html:has(.landing) {
+    scroll-behavior: smooth;
+  }
 }
 
 @media print {
