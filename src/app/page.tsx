@@ -6,8 +6,8 @@ import { BrandMark, BrandWordmark } from "@/components/brand"
 import { HeroArt } from "@/components/landing/scene-art"
 import { UnitBrowser, type LandingCard } from "@/components/landing/unit-browser"
 import { isStandaloneUnit } from "@/lib/building-types"
-import { whatsappLink } from "@/lib/format"
-import { landingPhoto, photoSlug } from "@/lib/landing-photos"
+import { formatRupiah, whatsappLink } from "@/lib/format"
+import { landingGallery, landingPhoto, photoSlug } from "@/lib/landing-photos"
 import { siteConfig } from "@/lib/site"
 import { cn } from "@/lib/utils"
 
@@ -28,8 +28,6 @@ export const metadata: Metadata = {
 // Tata letak mengikuti desain acuan "Real Estate Property": bilah atas putih, hero bergambar dengan
 // sudut kiri bawah melengkung, tombol pil, dan kartu bergambar dengan kotak isi yang menumpuk.
 
-const TYPE_TITLE: Record<string, string> = { Kamar: "Kamar kos", Kios: "Kios", Kontrakan: "Kontrakan" }
-const TYPE_NOUN: Record<string, string> = { Kamar: "kamar", Kios: "kios", Kontrakan: "kontrakan" }
 const PERIOD: Record<string, { per: string; label: string }> = {
   Bulanan: { per: "bulan", label: "bulanan" },
   Triwulan: { per: "3 bulan", label: "per tiga bulan" },
@@ -58,37 +56,51 @@ export default async function LandingPage() {
     .sort((a, b) => a.code.localeCompare(b.code, "id", { numeric: true }))
   const available = units.filter((u) => !u.occupied).length
 
-  // Kamar & kios dikelompokkan per blok (awalan kode: "BA-1" → "BA"); apartemen satu kartu per unit
+  // Tiga properti: satu kontrakan (kamar & kios, nomornya dikelompokkan per blok) dan apartemen masing-masing satu kartu
+  const rooms = units.filter((u) => !isStandaloneUnit(u.type))
+  const singles = units.filter((u) => isStandaloneUnit(u.type))
   const blocks = new Map<string, typeof units>()
-  const singles: typeof units = []
-  for (const u of units) {
-    if (isStandaloneUnit(u.type)) singles.push(u)
-    else {
-      const key = u.code.split("-")[0] || u.code
-      blocks.set(key, [...(blocks.get(key) ?? []), u])
-    }
+  for (const u of rooms) {
+    const key = u.code.split("-")[0] || u.code
+    blocks.set(key, [...(blocks.get(key) ?? []), u])
   }
+  const fromPrice = (type: string) => {
+    const list = rooms.filter((u) => u.type === type)
+    return list.length ? Math.min(...list.map((u) => u.price)) : null
+  }
+  const blockNames = (type: string) => Array.from(blocks).filter(([, l]) => l[0].type === type).map(([n]) => n).join(" & ")
+  const kamarFrom = fromPrice("Kamar")
+  const kiosFrom = fromPrice("Kios")
+  const freeRooms = rooms.filter((u) => !u.occupied)
 
   const cards: LandingCard[] = [
-    ...Array.from(blocks, ([key, list]): LandingCard => {
-      const type = list[0].type
-      const prices = list.map((u) => u.price)
-      const free = list.filter((u) => !u.occupied)
-      const period = PERIOD[list[0].period] ?? PERIOD.Bulanan
-      return {
-        key,
-        type,
-        title: `${TYPE_TITLE[type] ?? type} Blok ${key}`,
-        description: `${list.length} ${TYPE_NOUN[type] ?? "unit"}, sewa ${period.label}. ${free.length > 0 ? `Tersedia: ${free.map((u) => u.code).join(", ")}.` : "Semua sedang terisi."}`,
-        units: list.map((u) => ({ code: u.code, label: u.code.split("-")[1] ?? u.code, occupied: u.occupied })),
-        single: false,
-        price: Math.min(...prices),
-        priceVaries: new Set(prices).size > 1,
-        per: period.per,
-        photo: landingPhoto(`blok-${photoSlug(key)}`, photoSlug(type)),
-        art: type === "Kios" ? "kios" : "kos",
-      }
-    }),
+    ...(rooms.length
+      ? [
+          {
+            key: "kontrakan",
+            type: "Kontrakan",
+            title: "Kontrakan Razmel's",
+            description: [
+              `${rooms.filter((u) => u.type === "Kamar").length} kamar (blok ${blockNames("Kamar")}) dan ${rooms.filter((u) => u.type === "Kios").length} kios (blok ${blockNames("Kios")}), sewa bulanan.`,
+              kamarFrom !== null && kiosFrom !== null && `Kamar ${formatRupiah(kamarFrom)}, kios mulai ${formatRupiah(kiosFrom)} per bulan.`,
+            ]
+              .filter(Boolean)
+              .join(" "),
+            units: rooms.map((u) => ({ code: u.code, label: u.code.split("-")[1] ?? u.code, occupied: u.occupied })),
+            groups: Array.from(blocks, ([name, list]) => ({
+              name,
+              units: list.map((u) => ({ code: u.code, label: u.code.split("-")[1] ?? u.code, occupied: u.occupied })),
+            })),
+            single: false,
+            price: Math.min(...rooms.map((u) => u.price)),
+            priceVaries: new Set(rooms.map((u) => u.price)).size > 1,
+            per: "bulan",
+            photos: landingGallery("kontrakan"),
+            art: "kos" as const,
+            freeNote: freeRooms.length > 0 ? `Kosong: ${freeRooms.map((u) => u.code).join(", ")}` : null,
+          } satisfies LandingCard,
+        ]
+      : []),
     ...singles.map(
       (u): LandingCard => ({
         key: u.code,
@@ -100,8 +112,9 @@ export default async function LandingPage() {
         price: u.price,
         priceVaries: false,
         per: (PERIOD[u.period] ?? PERIOD.Bulanan).per,
-        photo: landingPhoto(photoSlug(u.code), photoSlug(u.type)),
+        photos: landingGallery(photoSlug(u.code)),
         art: /lagoon|laguna|sky|pantai/i.test(u.code) ? "tower-lagoon" : "tower-garden",
+        freeNote: null,
       })
     ),
   ]
@@ -109,10 +122,15 @@ export default async function LandingPage() {
   const wa = whatsappLink(siteConfig.whatsapp, "Halo Razmel's Property, saya ingin menanyakan unit yang masih tersedia.")
   const heroPhoto = landingPhoto("hero")
   const heroPhotoMobile = landingPhoto("hero-hp")
-  const availability = available > 0 ? `${available} unit tersedia hari ini` : "Semua unit sedang terisi"
+  // Ringkasan per jenis, mis. "Kosong: 2 kamar, 1 kios, 1 apartemen"
+  const freeByType = ["Kamar", "Kios", "Apartemen"]
+    .map((t) => [t.toLowerCase(), units.filter((u) => u.type === t && !u.occupied).length] as const)
+    .filter(([, n]) => n > 0)
+    .map(([t, n]) => `${n} ${t}`)
+  const availability = available > 0 ? `Kosong: ${freeByType.join(", ")}` : "Semua unit sedang terisi"
 
   const steps = [
-    { title: "Pilih unit yang tersedia", text: "Lihat pilihan unit di atas. Nomor unit yang masih kosong ditandai hijau." },
+    { title: "Pilih unit yang tersedia", text: "Lihat properti di atas. Di kontrakan, nomor kamar atau kios yang masih kosong ditandai hijau." },
     {
       title: wa ? "Chat pengelola lewat WhatsApp" : "Hubungi pengelola",
       text: wa
@@ -131,7 +149,7 @@ export default async function LandingPage() {
   return (
     <div className="landing min-h-screen">
       <a href="#unit" className="sr-only focus:not-sr-only focus:fixed focus:top-3 focus:left-3 focus:z-50 focus:rounded-full focus:bg-ink focus:px-5 focus:py-2.5 focus:text-sm focus:font-medium focus:text-white">
-        Lewati ke pilihan unit
+        Lewati ke daftar properti
       </a>
 
       {/* Bilah atas putih: merek di kiri, info singkat di kanan */}
@@ -213,7 +231,7 @@ export default async function LandingPage() {
                 </li>
                 <li>
                   <a href="#unit" className={cn("border-b border-transparent pb-1 transition-colors hover:border-white/70", focusLight)}>
-                    Pilihan unit
+                    Properti
                   </a>
                 </li>
                 <li>
@@ -257,7 +275,7 @@ export default async function LandingPage() {
                 dikelola dengan rapi.
               </h1>
               <p className="mt-5 max-w-xl text-base leading-7 text-balance text-white/90 xl:ml-auto xl:max-w-[33rem]">
-                Razmel&apos;s Property menyewakan kamar dan kios, serta apartemen di Daan Mogot (Jakarta Barat) dan Depok, dengan tarif bulanan yang jelas.
+                Razmel&apos;s Property menyewakan kontrakan (kamar dan kios) serta dua apartemen: Sky Terrace Lagoon di Daan Mogot, Jakarta Barat, dan Grand Taman Melati 2 di Depok.
               </p>
               <div className="mt-8 flex flex-wrap gap-3 xl:justify-end">
                 <a href="#unit" className={pillWhite}>
@@ -274,11 +292,11 @@ export default async function LandingPage() {
           </div>
         </section>
 
-        {/* Pilihan unit: kartu per blok dan per apartemen, bisa disaring */}
+        {/* Properti: kontrakan dan dua apartemen, masing-masing satu kartu dengan galeri foto */}
         <section id="unit" className="mx-auto max-w-6xl scroll-mt-6 px-5 py-16 sm:px-8 sm:py-20">
-          <h2 className="text-[32px] leading-tight font-medium sm:text-[40px]">Pilihan unit</h2>
+          <h2 className="text-[32px] leading-tight font-medium sm:text-[40px]">Properti kami</h2>
           <p className="mt-3 mb-7 max-w-2xl text-base leading-7 text-ink/80">
-            Pilih jenisnya, lalu lihat nomor unit yang masih tersedia. Statusnya diambil langsung dari catatan pengelola.
+            Satu kontrakan dan dua apartemen. Geser foto untuk melihat lebih banyak; status kosong atau disewa diambil langsung dari catatan pengelola.
           </p>
           <UnitBrowser cards={cards} whatsapp={siteConfig.whatsapp} />
         </section>
@@ -336,7 +354,7 @@ export default async function LandingPage() {
             <ul className="flex flex-wrap gap-x-8 gap-y-3 text-[15px]">
               <li>
                 <a href="#unit" className={cn("underline-offset-4 hover:underline", focusLight)}>
-                  Pilihan unit
+                  Properti
                 </a>
               </li>
               <li>

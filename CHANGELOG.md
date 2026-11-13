@@ -4,6 +4,16 @@ Catatan kronologis semua perubahan, penambahan fitur, dan pemeliharaan pada sist
 
 ---
 
+## 📅 Jumat, 13 November 2026
+**Status:** Halaman depan: tiga properti dengan galeri foto
+
+### 🔄 Diubah (Changed)
+- Halaman depan kini menampilkan **tiga properti**: Kontrakan (semua kamar & kios dalam satu kartu, nomor dikelompokkan per blok), Grand Taman Melati 2, dan Sky Terrace Lagoon. Filter jenis dihapus.
+- Tiap kartu punya **galeri foto asli** yang bisa digeser (Kontrakan 1 foto, Grand Taman Melati 2 enam foto, Sky Terrace delapan foto).
+- Ringkasan ketersediaan per jenis ("Kosong: 2 kamar, 1 kios, 1 apartemen").
+
+---
+
 ## 📅 Kamis, 12 November 2026
 **Status:** Halaman depan baru untuk pencari hunian
 

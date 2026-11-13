@@ -1,14 +1,12 @@
 Folder foto halaman depan Razmel's Property.
 
 Taruh foto asli di folder ini dengan nama berikut (jpg, jpeg, png, atau webp).
-Slot yang belum ada fotonya otomatis memakai ilustrasi.
+Kartu tanpa foto otomatis memakai ilustrasi.
 
-  hero.jpg                              gambar besar di bagian atas (mendatar, lebar minimal 1500 px)
-  hero-hp.jpg                           versi tegak untuk layar HP (opsional)
-  blok-ba.jpg, blok-bb.jpg              kartu kamar per blok
-  blok-da.jpg, blok-db.jpg              kartu kios per blok
-  kamar.jpg, kios.jpg                   dipakai semua blok bertipe itu kalau foto bloknya belum ada
-  apartment-grand-taman-melati-2.jpg    kartu apartemen (nama unit, huruf kecil, spasi jadi "-")
-  apartment-sky-terrace-lagoon.jpg
+  hero.jpg                                gambar besar di bagian atas (mendatar, lebar minimal 1500 px)
+  hero-hp.jpg                             versi tegak untuk layar HP (opsional)
+  kontrakan-1.jpg, kontrakan-2.jpg, ...   galeri kartu Kontrakan (kamar & kios)
+  apartment-grand-taman-melati-2-1.jpg, -2, ...   galeri Grand Taman Melati 2
+  apartment-sky-terrace-lagoon.jpg, -2, -3, ...   galeri Sky Terrace Lagoon
 
-Foto kartu sebaiknya mendatar (perbandingan sekitar 10:7), lebar 800 px sudah cukup.
+Urutan galeri mengikuti nomornya. Foto kartu sebaiknya mendatar (10:7), lebar 1000 px sudah cukup.
