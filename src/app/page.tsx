@@ -8,6 +8,7 @@ import { UnitBrowser, type LandingCard } from "@/components/landing/unit-browser
 import { isStandaloneUnit } from "@/lib/building-types"
 import { formatRupiah, whatsappLink } from "@/lib/format"
 import { landingGallery, landingPhoto, photoSlug } from "@/lib/landing-photos"
+import { unitDetails } from "@/lib/landing-details"
 import { siteConfig } from "@/lib/site"
 import { cn } from "@/lib/utils"
 
@@ -106,7 +107,8 @@ export default async function LandingPage() {
         key: u.code,
         type: u.type,
         title: u.code,
-        description: u.description || null,
+        description: unitDetails[photoSlug(u.code)]?.summary ?? (u.description || null),
+        detail: unitDetails[photoSlug(u.code)] ?? null,
         units: [{ code: u.code, label: u.code, occupied: u.occupied }],
         single: true,
         price: u.price,

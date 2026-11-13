@@ -1,9 +1,10 @@
 "use client"
 
 import { useRef, useState } from "react"
-import { ChevronLeft, ChevronRight, MoveRight } from "lucide-react"
+import { ChevronDown, ChevronLeft, ChevronRight, MoveRight } from "lucide-react"
 import { KiosArt, KosArt, TowerArt } from "@/components/landing/scene-art"
 import { formatRupiah, whatsappLink } from "@/lib/format"
+import type { UnitDetail } from "@/lib/landing-details"
 import { cn } from "@/lib/utils"
 
 export type LandingUnit = { code: string; label: string; occupied: boolean }
@@ -27,6 +28,8 @@ export type LandingCard = {
   art: "kos" | "kios" | "tower-lagoon" | "tower-garden"
   /** Ringkasan nomor yang kosong, mis. "Kosong: BA-6, DA-2" */
   freeNote: string | null
+  /** Detail apartemen (spesifikasi, fasilitas, harga lain); dibuka lewat "Lihat detail unit" */
+  detail?: UnitDetail | null
 }
 
 const focusRing = "focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-ink"
@@ -52,7 +55,7 @@ export function UnitBrowser({ cards, whatsapp }: { cards: LandingCard[]; whatsap
         </p>
       )}
 
-      <ul className="mt-8 grid gap-x-6 gap-y-10 md:grid-cols-2 lg:grid-cols-3">
+      <ul className="mt-8 grid items-start gap-x-6 gap-y-10 md:grid-cols-2 lg:grid-cols-3">
         {cards.map((card) => (
           <li key={card.key}>
             <UnitCard card={card} whatsapp={whatsapp} />
@@ -110,6 +113,7 @@ function UnitCard({ card, whatsapp }: { card: LandingCard; whatsapp: string }) {
           </div>
         )}
         {card.freeNote && <p className="mt-3 text-sm font-medium text-emerald-800">{card.freeNote}</p>}
+        {card.detail && <DetailPanel detail={card.detail} />}
 
         <div className="mt-4 flex items-center justify-between gap-3">
           <p className="text-sm text-ink/75">
@@ -127,6 +131,52 @@ function UnitCard({ card, whatsapp }: { card: LandingCard; whatsapp: string }) {
         </div>
       </div>
     </article>
+  )
+}
+
+// Detail dari caption iklan pemilik; tertutup secara bawaan supaya kartu tetap ringkas
+function DetailPanel({ detail }: { detail: UnitDetail }) {
+  const list = (title: string, items: string[]) =>
+    items.length > 0 && (
+      <div>
+        <h4 className="text-[13px] font-semibold text-ink">{title}</h4>
+        <ul className="mt-1 space-y-0.5 text-sm leading-6 text-ink/80">
+          {items.map((t) => (
+            <li key={t} className="flex gap-2">
+              <span aria-hidden="true" className="mt-[11px] size-1 shrink-0 rounded-full bg-ink/40" />
+              {t}
+            </li>
+          ))}
+        </ul>
+      </div>
+    )
+  return (
+    <details className="group/detail mt-3 border-t border-ink/10 pt-3">
+      <summary className={cn("flex cursor-pointer list-none items-center justify-between gap-2 rounded-md text-sm font-medium text-ink marker:hidden [&::-webkit-details-marker]:hidden", focusRing)}>
+        Lihat detail unit
+        <ChevronDown className="size-4 transition-transform group-open/detail:rotate-180 motion-reduce:transition-none" />
+      </summary>
+      <div className="mt-3 space-y-4">
+        {list("Spesifikasi", detail.specs)}
+        {detail.prices.length > 0 && (
+          <div>
+            <h4 className="text-[13px] font-semibold text-ink">Pilihan sewa lain</h4>
+            <dl className="mt-1 space-y-0.5 text-sm leading-6">
+              {detail.prices.map((p) => (
+                <div key={p.label} className="flex gap-2">
+                  <dt className="w-[68px] shrink-0 text-ink/70">{p.label}</dt>
+                  <dd className="text-ink/90">{p.value}</dd>
+                </div>
+              ))}
+            </dl>
+          </div>
+        )}
+        {list("Di dalam unit", detail.inUnit)}
+        {list("Fasilitas gedung", detail.building)}
+        {list("Sekitar", detail.nearby)}
+        {detail.address && <p className="text-sm leading-6 text-ink/80"><span className="font-semibold text-ink">Alamat:</span> {detail.address}</p>}
+      </div>
+    </details>
   )
 }
 

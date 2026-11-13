@@ -11,6 +11,8 @@ Catatan kronologis semua perubahan, penambahan fitur, dan pemeliharaan pada sist
 - Halaman depan kini menampilkan **tiga properti**: Kontrakan (semua kamar & kios dalam satu kartu, nomor dikelompokkan per blok), Grand Taman Melati 2, dan Sky Terrace Lagoon. Filter jenis dihapus.
 - Tiap kartu punya **galeri foto asli** yang bisa digeser (Kontrakan 1 foto, Grand Taman Melati 2 enam foto, Sky Terrace delapan foto).
 - Ringkasan ketersediaan per jenis ("Kosong: 2 kamar, 1 kios, 1 apartemen").
+- Foto cover Grand Taman Melati 2 jadi foto pertama galerinya.
+- Kartu apartemen punya **"Lihat detail unit"** dari caption iklan pemilik: spesifikasi, pilihan sewa lain, isi unit, fasilitas gedung, dan akses sekitar (`src/lib/landing-details.ts`). Nomor tower/lantai/unit sengaja tidak ditampilkan.
 
 ---
 
